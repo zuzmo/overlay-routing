@@ -1,4 +1,4 @@
-# Comment
+# Comments
 class Graph
 
   def initialize

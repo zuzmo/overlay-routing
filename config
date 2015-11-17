@@ -1,3 +1,2 @@
-updateInterval = 300
-port  =  7000  
-weightFiles  =/path
+updateInterval,15
+weightFile,./weights.csv

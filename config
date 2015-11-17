@@ -1,2 +1,8 @@
+<<<<<<< Updated upstream
 updateInterval,15
 weightFile,./weights.csv
+=======
+updateInterval = 300
+port  =  7000  
+weightsFiles  =/path
+>>>>>>> Stashed changes

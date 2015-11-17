@@ -1,7 +1,7 @@
 class Utility
 
 	# ===============================================================
-	# Reads the config file and returns a Hash containing the 
+	# Reads the global config file and returns a Hash containing the
 	# configuration options
 	# ===============================================================
 	def self.read_config(path)

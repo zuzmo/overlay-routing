@@ -21,8 +21,6 @@ class Graph
     end
   end
 
-
-
   def get_neighbors(src)
     @adjacency_map[src]
   end
@@ -40,3 +38,6 @@ class Graph
   end
 
 end
+
+
+grpah = Graph.new

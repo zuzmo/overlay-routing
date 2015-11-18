@@ -49,7 +49,3 @@ class Utility
 	end
 
 end
-
-# puts Utility.chunkify('costs+costs', 3).class
-puts Utility.num_bytes('costs+				      \ncosts')
-puts Utility.num_bytes2('costs+\ncosts')

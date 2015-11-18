@@ -8,10 +8,10 @@ class Dijkstras
 		min = Float::INFINITY
 		vertex = String.new
 		@visited.each do |key, value|
-				value = @dist[key]
-				if (!@visited[key]) && (value <= min)
-					min = value
-					vertex = key
+			value = @dist[key]
+			if (!@visited[key]) && (value <= min)
+				min = value
+				vertex = key
 			end
 		end
 

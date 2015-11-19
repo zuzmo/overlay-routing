@@ -38,9 +38,8 @@ class Utility
 				node_a, ip_a, node_b, ip_b, cost = line.split(',')
 				node_a.strip!; ip_a.strip!; node_b.strip!; ip_b.strip!; cost.strip!
 				
-				# insert from node A to node B and viceversa
 				hostname_ip_map[node_a] = ip_a
-				hostname_ip_map[node_b] = ip_b
+				# hostname_ip_map[node_b] = ip_b
 
 				if link_cost_map.has_key?(ip_a)
 					sub_map = @link_cost_map[ip_a]
@@ -48,12 +47,12 @@ class Utility
 				else
 					link_cost_map[ip_a] = {ip_b => cost}
 				end
-				if link_cost_map.has_key?(ip_b)
-					sub_map = @link_cost_map[ip_b]
-					sub_map[ip_a] = cost
-				else
-					link_cost_map[ip_b] = {ip_a => cost}
-				end
+				# if link_cost_map.has_key?(ip_b)
+				# 	sub_map = @link_cost_map[ip_b]
+				# 	sub_map[ip_a] = cost
+				# else
+				# 	link_cost_map[ip_b] = {ip_a => cost}
+				# end
 			end
 		end
 		return hostname_ip_map, link_cost_map

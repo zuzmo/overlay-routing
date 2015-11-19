@@ -11,13 +11,43 @@ require 'thread'
 	# Starts the program.
 	# =========================================================================
 	def main
-		dbg("entering main()")
+		 dbg("entering main()")
 		 read_config_file()
 	     listen_for_hook()
+	     start_flood_timer()
 	     dbg("done main()")
 	end
 
 
+
+	def start_flood_timer	
+		@flood_timer_pid = Thread.new{
+			loop do	
+				sleep @update_interval.to_i
+				puts "start flood"
+			end
+		}
+	end
+
+
+	def start_flood
+		#f = packet_creator.create_flood_packet
+		#for each neighbor n
+		#   client.new.connect(n).send_flood_packet(f)
+		#   c.close
+		#server.listen for packets p
+		#    p.check sender
+		#      if sender.sequence > sender.curr_sequence 
+		#          store. for all neighbors n
+		#             client.new.connect(n).send_flood_packet(p)
+		#             c.close       
+		#      else ignore
+		# if number of packets stored == num_of_nodes 
+		#     send all packets to graph to be processed
+		#     update forwarding table
+		# else
+		#     wait or time_out
+	end
 
 
 	# =========================================================================
@@ -29,7 +59,6 @@ require 'thread'
 		 @update_interval = config_options["updateInterval"]
 		 @weights_file_name = config_options["weightFile"]
 		 @hostname_ip_map, @link_cost_map = Utility.read_link_costs("./s1/#{@weights_file_name}")
-		 puts @link_cost_map
 		 dbg("done read_config_file()")
 	end
 
@@ -69,6 +98,7 @@ require 'thread'
 		loop do
 			sleep 1
 			@clock.tick(1)
+			dbg @clock.get_time
 		end
 	end
 

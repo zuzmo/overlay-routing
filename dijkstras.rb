@@ -58,7 +58,7 @@ class Dijkstras
 
 		if dest == fin_dest
 			@path[fin_dest] = @dest_path
-			puts @path
+			return @path
 		end
 
 	end

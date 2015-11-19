@@ -19,7 +19,6 @@ class Dijkstras
 	end
 
 	def self.dijkstra(graph, src)
-
 		@dist = {}
 		@visited = {}
 		@prev = {}
@@ -49,7 +48,7 @@ class Dijkstras
 
 
 	def self.print_path(dest, fin_dest)
-		@path = {}
+
 		@dest_path = []
 		if @prev[dest] != -1
 			print_path(@prev[dest], fin_dest)
@@ -58,44 +57,28 @@ class Dijkstras
 
 		if dest == fin_dest
 			@path[fin_dest] = @dest_path
-			puts @path
 		end
 
 	end
 
-	def self.src_to_all_dest(graph, s)
-		dijkstra(graph, s)
+	def self.src_to_all_dest(graph, src)
 
+		@path_to_all_dest = {}
 		graph.get_all_nodes.each do |dest|
-			print_path(dest, dest)
+			src_to_dest(graph, src, dest)
+			@path_to_all_dest[dest] = @path[dest]
 		end
 
+		return @path_to_all_dest
 	end
 
 	def self.src_to_dest(graph, src, dest)
+
+		@path = {}
 		dijkstra(graph, src)
 		print_path(dest, dest)
+
+		return @path
 	end
 
 end
-
-graph = Graph.new
-graph.add_edge('a', 'b', 2)
-graph.add_edge('a', 'c', 5)
-graph.add_edge('a', 'd', 1)
-
-graph.add_edge('b', 'c', 3)
-graph.add_edge('b', 'd', 2)
-
-graph.add_edge('c', 'e', 1)
-
-graph.add_edge('d', 'c', 3)
-graph.add_edge('d', 'e', 1)
-
-graph.add_edge('f', 'c', 5)
-graph.add_edge('f', 'e', 2)
-
-puts "\nTarget\tPath\n\n"
-Dijkstras.src_to_all_dest(graph, 'a')
-puts
-Dijkstras.src_to_dest(graph, 'f', 'a')

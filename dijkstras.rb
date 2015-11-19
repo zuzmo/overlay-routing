@@ -78,24 +78,3 @@ class Dijkstras
 	end
 
 end
-
-graph = Graph.new
-graph.add_edge('a', 'b', 2)
-graph.add_edge('a', 'c', 5)
-graph.add_edge('a', 'd', 1)
-
-graph.add_edge('b', 'c', 3)
-graph.add_edge('b', 'd', 2)
-
-graph.add_edge('c', 'e', 1)
-
-graph.add_edge('d', 'c', 3)
-graph.add_edge('d', 'e', 1)
-
-graph.add_edge('f', 'c', 5)
-graph.add_edge('f', 'e', 2)
-
-puts "\nTarget\tPath\n\n"
-Dijkstras.src_to_all_dest(graph, 'a')
-puts
-Dijkstras.src_to_dest(graph, 'f', 'a')

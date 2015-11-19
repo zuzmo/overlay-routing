@@ -11,61 +11,52 @@ require 'thread'
 	# Starts the program.
 	# =========================================================================
 	def main
-		 read_config_file()			
-	     start_clock()
+		dbg("entering main()")
+		 read_config_file()
 	     listen_for_hook()
-	     start_heartbeat()
+	     dbg("done main()")
 	end
 
 
-	# =========================================================================
-	# creates the clock object that will get the time from the OS 
-	# and update it.
-	# =========================================================================
-	def start_clock
-	 	 @clock = Clock.new
-	end
 
 
 	# =========================================================================
 	# Reads the config file and sets up constants.
 	# =========================================================================	
 	def read_config_file
+		 dbg("entering read_config_file()")
 		 config_options = Utility.read_config("./s1/config")
 		 @update_interval = config_options["updateInterval"]
 		 @weights_file_name = config_options["weightFile"]
-
+		 @hostname_ip_map, @link_cost_map = Utility.read_link_costs("./s1/#{@weights_file_name}")
+		 puts @link_cost_map
+		 dbg("done read_config_file()")
 	end
 
-
-	# =========================================================================
-	# Starts the thread that will be in charge if listening for commands from 
-	# stdin.
-	# =========================================================================
-	def start_hook_listener
-	     @hook_pid = Thread.new{listen_for_hook}
-	end
 
 
 	# =========================================================================
 	# Listens and interprets commands given to stdin.
 	# =========================================================================
 	def listen_for_hook
-		loop do	
-			user_input = gets.chomp                               #blocks while waiting for user input
-		
-			case user_input
-			when /^DUMPTABLE\s[\w\d\.]*/
-				file_name = user_input.split(" ")[1]
-				dumptable(file_name)
-			when /^FORCEUPDATE$/
-				#todo
-			when /^CHECKSTABLE$/
-				#todo
-			else
-				puts "try again"
+		dbg("entering listen_for_hook()")
+		@hook_pid = Thread.new{
+			loop do	
+				user_input = gets.chomp                               #blocks while waiting for user input
+			
+				case user_input
+				when /^DUMPTABLE\s[\w\d\.]*/
+					file_name = user_input.split(" ")[1]
+					dumptable(file_name)
+				when /^FORCEUPDATE$/
+					#todo
+				when /^CHECKSTABLE$/
+					#todo
+				else
+					puts "try again"
+				end
 			end
-		end
+		}
 	end
 
 
@@ -73,6 +64,8 @@ require 'thread'
 	# Keeps the main thread from dying. Updates the clock.
 	# =========================================================================
 	def start_heartbeat
+		dbg("entering start_heartbeat")
+		@clock = Clock.new
 		loop do
 			sleep 1
 			@clock.tick(1)
@@ -107,6 +100,7 @@ require 'thread'
 	end
 
 
-main       
+master = Thread.new{main}
+start_heartbeat()       
 
 

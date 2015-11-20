@@ -21,7 +21,6 @@ require 'thread'
 	end
 
 
-
 	def start_flood_timer	
 		@flood_timer_pid = Thread.new{
 			loop do	
@@ -38,13 +37,16 @@ require 'thread'
 		#f = packet_creator.create_flood_packet
 		json = Messages.create_flood_message("a",443)
 		#for each neighbor n
-		puts @hostname_ip_map
 		for n in @hostname_ip_map.keys.each do		
 		#   client.new.connect(n).send_flood_packet(f)
+			ip = @hostname_ip_map[n]
+			client = Client.new(ip,7000)
 
-			
-
+			#client.send
 		#   c.close
+			client.close
+			puts "after flood"
+			
 
 		end
 		#server.listen for packets p

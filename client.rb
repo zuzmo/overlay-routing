@@ -2,14 +2,16 @@ require 'socket'
 
 class Client
 
-	def initilize(ip, port)
+	def initialize(ip, port)
+		puts "start"
 		@server = TCPSocket.open(ip, port)
+		puts "he"
 		@request = nil
 		@response = nil
-		receive
-		send
-		@request.join
-		@response.join
+		# receive
+		# send
+		# @request.join
+		# @response.join
 	end
 
 
@@ -31,11 +33,17 @@ class Client
 			}
 		end
 	end
+
+	def close
+		@server.close
+	end
+
+
 end
 
-ip = '10.0.0.20'
-port = 7000
-s = Client.new(ip, port)
+# ip = '10.0.0.20'
+# port = 7000
+# s = Client.new(ip,port)
 
 # while line = gets
 # line = gets

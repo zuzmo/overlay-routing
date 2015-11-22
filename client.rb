@@ -2,14 +2,14 @@ require 'socket'
 
 class Client
 
-	def initilize(ip, port)
+	def initialize(ip, port)
 		@server = TCPSocket.open(ip, port)
-		@request = nil
-		@response = nil
-		receive
-		send
-		@request.join
-		@response.join
+		# @request = nil
+		# @response = nil
+		# receive
+		# send
+		# @request.join
+		# @response.join
 	end
 
 
@@ -27,15 +27,20 @@ class Client
 		@request = Thread.new do
 			loop {
 				msg = STDIN.gets.chomp
-				@server.pust(msg)
+				puts "#{msg}"
+				@server.puts(msg)
 			}
 		end
 	end
+
+	def close
+		@server.close
+	end
 end
 
-ip = '10.0.0.20'
-port = 7000
-s = Client.new(ip, port)
+# ip = '10.0.0.20'
+# port = 7000
+# s = Client.new(ip, port)
 
 # while line = gets
 # line = gets

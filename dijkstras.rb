@@ -80,5 +80,26 @@ class Dijkstras
 
 		return @path
 	end
+	
+	def self.forwarding_table(graph, src)
+
+		@link = Hash.new {|h,k| h[k]=[]}
+		src_to_all_dest(graph, src)
+
+		@path_to_all_dest.keys.each do |key|
+			i = 1
+			if key != src
+				@path_to_all_dest[key].each do |value|
+					if i <= 2
+						@link[key] <<  value
+						i += 1
+					end
+				end
+			end
+		end
+
+		return @link
+	end
+
 
 end

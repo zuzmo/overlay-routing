@@ -2,6 +2,8 @@
 
 require_relative './utility.rb'
 require_relative './clock.rb'
+require_relative './message_builder.rb'
+require_relative './client.rb'
 require 'thread'
 
 @debug_mode = true 
@@ -11,19 +13,54 @@ require 'thread'
 	# Starts the program.
 	# =========================================================================
 	def main
-		 read_config_file()			
-	     start_clock()
+		 dbg("entering main()")
+		 read_config_file()
 	     listen_for_hook()
-	     start_heartbeat()
+	     start_flood_timer()
+	     dbg("done main()")
 	end
 
 
-	# =========================================================================
-	# creates the clock object that will get the time from the OS 
-	# and update it.
-	# =========================================================================
-	def start_clock
-	 	 @clock = Clock.new
+	def start_flood_timer	
+		@flood_timer_pid = Thread.new{
+			loop do	
+				#sleep @update_interval.to_i
+				sleep 3
+				start_flood()
+			end
+		}
+	end
+
+
+	def start_flood
+
+		#f = packet_creator.create_flood_packet
+		json = Messages.create_flood_message("a",443)
+		#for each neighbor n
+		for n in @hostname_ip_map.keys.each do		
+		#   client.new.connect(n).send_flood_packet(f)
+			ip = @hostname_ip_map[n]
+			client = Client.new(ip,7000)
+
+			#client.send
+		#   c.close
+			client.close
+			puts "after flood"
+			
+
+		end
+		#server.listen for packets p
+		#    p.check sender
+		#      if sender.sequence > sender.curr_sequence 
+		#          store. for all neighbors n
+		#             client.new.connect(n).send_flood_packet(p)
+		#             c.close       
+		#      else ignore
+		# if number of packets stored == num_of_nodes 
+		#     send all packets to graph to be processed
+		#     update forwarding table
+		# else
+		#     wait or time_out
 	end
 
 
@@ -31,41 +68,38 @@ require 'thread'
 	# Reads the config file and sets up constants.
 	# =========================================================================	
 	def read_config_file
+		 dbg("entering read_config_file()")
 		 config_options = Utility.read_config("./s1/config")
 		 @update_interval = config_options["updateInterval"]
 		 @weights_file_name = config_options["weightFile"]
-
+		 @hostname_ip_map, @link_cost_map = Utility.read_link_costs("./s1/#{@weights_file_name}")
+		 dbg("done read_config_file()")
 	end
 
-
-	# =========================================================================
-	# Starts the thread that will be in charge if listening for commands from 
-	# stdin.
-	# =========================================================================
-	def start_hook_listener
-	     @hook_pid = Thread.new{listen_for_hook}
-	end
 
 
 	# =========================================================================
 	# Listens and interprets commands given to stdin.
 	# =========================================================================
 	def listen_for_hook
-		loop do	
-			user_input = gets.chomp                               #blocks while waiting for user input
-		
-			case user_input
-			when /^DUMPTABLE\s[\w\d\.]*/
-				file_name = user_input.split(" ")[1]
-				dumptable(file_name)
-			when /^FORCEUPDATE$/
-				#todo
-			when /^CHECKSTABLE$/
-				#todo
-			else
-				puts "try again"
+		dbg("entering listen_for_hook()")
+		@hook_pid = Thread.new{
+			loop do	
+				user_input = gets.chomp                               #blocks while waiting for user input
+			
+				case user_input
+				when /^DUMPTABLE\s[\w\d\.]*/
+					file_name = user_input.split(" ")[1]
+					dumptable(file_name)
+				when /^FORCEUPDATE$/
+					#todo
+				when /^CHECKSTABLE$/
+					#todo
+				else
+					puts "try again"
+				end
 			end
-		end
+		}
 	end
 
 
@@ -73,9 +107,12 @@ require 'thread'
 	# Keeps the main thread from dying. Updates the clock.
 	# =========================================================================
 	def start_heartbeat
+		dbg("entering start_heartbeat")
+		@clock = Clock.new
 		loop do
 			sleep 1
 			@clock.tick(1)
+			dbg @clock.get_time
 		end
 	end
 
@@ -107,6 +144,7 @@ require 'thread'
 	end
 
 
-main       
+master = Thread.new{main}
+start_heartbeat()       
 
 

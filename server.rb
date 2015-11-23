@@ -1,6 +1,5 @@
 require 'socket'
 
-
 require_relative 'client'
 require_relative 'logger'
 
@@ -10,7 +9,6 @@ class Server
     @node_name = node_name
     @neighbors = neighbors
     @server_socket = TCPServer.open('', port)
-    @link_state_thread = nil
     # @clients = Queue.new     # connections accepted by this server
     # @servers = Queue.new     # connections requested to other servers (as client)
   end
@@ -21,7 +19,7 @@ class Server
       Logger.info("server started")
       loop {
         Thread.start(@server_socket.accept) do |client|
-          peeraddr = get_peer_address(client.peeraddr)
+          peeraddr = get_peer_address(client)
           # @clients << client
           Logger.info("accepted connection to #{peeraddr}")
           receive_message(client)
@@ -33,7 +31,7 @@ class Server
 
 
   def monitor_link_state
-    @link_state_thread = Thread.new do
+    Thread.new do
       if @neighbors == nil    # may not have peers to connect to
         return
       end
@@ -56,6 +54,7 @@ class Server
 
   def receive_message(client_node)
     puts "handling message..."
+    puts client_node.read
     # loop {
     #   msg = client.gets.chomp
     #   # TODO: route messages
@@ -65,16 +64,31 @@ class Server
   end
 
   def send_message(server_node, msg)
+    Thread.new do
+      server_ip = get_address(server_node)
+      begin
+        s = Client.new(server_ip, 7000)
+        s.send(msg)
+        s.close
+      rescue Exception => e
+        Logger.error("#{e} #{server_ip}")
+      end
+    end
 
 
   end
 
-  def get_peer_address(client)
-    client[2]
+   def get_peer_address(client)
+    client.peeraddr[2]
   end
 
-  def get_address
-    @server_socket.addr
+
+  def get_address(node)
+    @neighbors.each do |n|
+      if n[0] == node 
+        return n[1]
+      end
+    end
   end
 
   def shutdown

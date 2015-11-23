@@ -66,6 +66,8 @@ loop do
       exit(1)
     when /^debug/
       Debug.dump(server)
+    when /^send/
+      server.send_message('n2', 'Hi')
     else
       puts "try again"
     end

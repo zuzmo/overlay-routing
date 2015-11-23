@@ -12,26 +12,29 @@ class Client
 		# @response.join
 	end
 
-
-	def receive
-		@response = Thread.new do
-			loop {
-				msg = @server.gets.chomp
-				puts "#{msg}"
-			}
-		end
+	def send(msg)
+		@server.puts(msg)
 	end
 
+	# def receive
+	# 	@response = Thread.new do
+	# 		loop {
+	# 			msg = @server.gets.chomp
+	# 			puts "#{msg}"
+	# 		}
+	# 	end
+	# end
 
-	def send
-		@request = Thread.new do
-			loop {
-				msg = STDIN.gets.chomp
-				puts "#{msg}"
-				@server.puts(msg)
-			}
-		end
-	end
+
+	# def send
+	# 	@request = Thread.new do
+	# 		loop {
+	# 			msg = STDIN.gets.chomp
+	# 			puts "#{msg}"
+	# 			@server.puts(msg)
+	# 		}
+	# 	end
+	# end
 
 	def close
 		@server.close

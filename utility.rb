@@ -68,8 +68,8 @@ class Utility
 	# Reads the config file containing the cost for each of
 	# its outgoing links and returns two Hashes.
 	# 1st. Hash:
-	# 		maps source name to its neighbors
-	#		(e.g. {'n1' => [['n2', '10.0.0.21'], [n3 , '10.0.4.21']] })
+	# 		maps source name to its neighbors including costs
+	#		(e.g. {'n1' => [['n2', '10.0.0.21', 1], [n3 , '10.0.4.21', 2]] })
 	# 2nd. Hash:
 	#		maps ip address to a Hash of ip addresses with their costs 
 	#		(e.g. '10.0.0.20' => { '10.0.4.20' => 1 })

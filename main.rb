@@ -3,7 +3,7 @@
 require_relative './utility.rb'
 require_relative './clock.rb'
 require_relative './message_builder.rb'
-require_relative './client.rb'
+require_relative './server.rb'
 require 'thread'
 
 @debug_mode = true 
@@ -16,12 +16,26 @@ require 'thread'
 		 dbg("entering main()")
 		 read_config_file()
 	     listen_for_hook()
+	     start_server()
 	     start_flood_timer()
 	     dbg("done main()")
 	end
 
 
+	def start_server
+		dbg("entering start_server()")
+		begin 
+			@server = Server.new($node_name, 7000, @hostname_ip_map)
+			@server.run
+		rescue Exception => e
+			dbg("error in start_server(). Failed to start server")
+		end
+		dbg("exiting start_server()")
+	end
+
+
 	def start_flood_timer	
+		dbg("entering start_flood_timer()")
 		@flood_timer_pid = Thread.new{
 			loop do	
 				#sleep @update_interval.to_i
@@ -29,26 +43,25 @@ require 'thread'
 				start_flood()
 			end
 		}
+		dbg("exiting start_flood_timer()")
 	end
 
 
 	def start_flood
-
+		dbg("entering start_flood()")
 		#f = packet_creator.create_flood_packet
-		json = Messages.create_flood_message("a",443)
+		flood_message = Messages.create_flood_message("a",443)
 		#for each neighbor n
-		for n in @hostname_ip_map.keys.each do		
-		#   client.new.connect(n).send_flood_packet(f)
-			ip = @hostname_ip_map[n]
-			client = Client.new(ip,7000)
+		for neighbor in @hostname_ip_map[@node_name].each do					
+ 			
+ 			name = neighbor[0]
 
-			#client.send
-		#   c.close
-			client.close
-			puts "after flood"
-			
-
+ 			# client.new.connect(n).send_flood_packet(f)
+		    #client.send
+		    #client.close
+			 @server.send_message(name,flood_message)					
 		end
+		
 		#server.listen for packets p
 		#    p.check sender
 		#      if sender.sequence > sender.curr_sequence 
@@ -61,6 +74,8 @@ require 'thread'
 		#     update forwarding table
 		# else
 		#     wait or time_out
+
+		dbg("exiting start_flood()")
 	end
 
 
@@ -69,7 +84,7 @@ require 'thread'
 	# =========================================================================	
 	def read_config_file
 		 dbg("entering read_config_file()")
-		 config_options = Utility.read_config("./s1/config")
+		 config_options = Utility.read_config("./s1/#{@config_file_name}")
 		 @update_interval = config_options["updateInterval"]
 		 @weights_file_name = config_options["weightFile"]
 		 @hostname_ip_map, @link_cost_map = Utility.read_link_costs("./s1/#{@weights_file_name}")
@@ -86,7 +101,6 @@ require 'thread'
 		@hook_pid = Thread.new{
 			loop do	
 				user_input = gets.chomp                               #blocks while waiting for user input
-			
 				case user_input
 				when /^DUMPTABLE\s[\w\d\.]*/
 					file_name = user_input.split(" ")[1]
@@ -100,6 +114,7 @@ require 'thread'
 				end
 			end
 		}
+		dbg("exiting listen_for_hook()")
 	end
 
 
@@ -143,7 +158,14 @@ require 'thread'
 		end
 	end
 
+if ARGV.length != 2
+  puts "Invalid number of arguments."
+  puts "Usage: ruby main.rb config <node_name>"
+  exit(1)
+end
 
+@config_file_name = ARGV[0]
+@node_name = ARGV[1]
 master = Thread.new{main}
 start_heartbeat()       
 

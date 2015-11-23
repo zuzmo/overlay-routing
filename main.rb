@@ -4,6 +4,7 @@ require_relative './utility.rb'
 require_relative './clock.rb'
 require_relative './message_builder.rb'
 require_relative './server.rb'
+require_relative './logger'
 require 'thread'
 
 @debug_mode = true 
@@ -13,11 +14,17 @@ require 'thread'
 	# Starts the program.
 	# =========================================================================
 	def main
-		 dbg("entering main()")
+
+ 		 dbg("entering main()")
+
+		 @config_file_name = ARGV[0]
+		 @node_name = ARGV[1]
+		 Logger.init(@node_name)
+		 start_heartbeat()    
 		 read_config_file()
-	     listen_for_hook()
 	     start_server()
 	     start_flood_timer()
+	     listen_for_hook()
 	     dbg("done main()")
 	end
 
@@ -50,18 +57,17 @@ require 'thread'
 	def start_flood
 		dbg("entering start_flood()")
 		#f = packet_creator.create_flood_packet
-		flood_message = Messages.create_flood_message("a",443)
+		flood_message = Messages.create_flood_message(@node_name,443)
 		#for each neighbor n
 		for neighbor in @hostname_ip_map[@node_name].each do					
  			
- 			name = neighbor[0]
-
+ 		
  			# client.new.connect(n).send_flood_packet(f)
 		    #client.send
 		    #client.close
-			 @server.send_message(name,flood_message)					
+			 @server.send_message(neighbor,flood_message)					
 		end
-		
+
 		#server.listen for packets p
 		#    p.check sender
 		#      if sender.sequence > sender.curr_sequence 
@@ -84,10 +90,10 @@ require 'thread'
 	# =========================================================================	
 	def read_config_file
 		 dbg("entering read_config_file()")
-		 config_options = Utility.read_config("./s1/#{@config_file_name}")
+		 config_options = Utility.read_config(@config_file_name)
 		 @update_interval = config_options["updateInterval"]
 		 @weights_file_name = config_options["weightFile"]
-		 @hostname_ip_map, @link_cost_map = Utility.read_link_costs("./s1/#{@weights_file_name}")
+		 @hostname_ip_map, @link_cost_map = Utility.read_link_costs("./#{@weights_file_name}")
 		 dbg("done read_config_file()")
 	end
 
@@ -98,9 +104,9 @@ require 'thread'
 	# =========================================================================
 	def listen_for_hook
 		dbg("entering listen_for_hook()")
-		@hook_pid = Thread.new{
+
 			loop do	
-				user_input = gets.chomp                               #blocks while waiting for user input
+				user_input = STDIN.gets.chomp                               #blocks while waiting for user input
 				case user_input
 				when /^DUMPTABLE\s[\w\d\.]*/
 					file_name = user_input.split(" ")[1]
@@ -109,11 +115,15 @@ require 'thread'
 					#todo
 				when /^CHECKSTABLE$/
 					#todo
+				when /^SHUTDOWN/
+					puts "attempting to shutdown"
+					server.shutdown
+					exit(1)
 				else
 					puts "try again"
 				end
 			end
-		}
+		
 		dbg("exiting listen_for_hook()")
 	end
 
@@ -122,13 +132,18 @@ require 'thread'
 	# Keeps the main thread from dying. Updates the clock.
 	# =========================================================================
 	def start_heartbeat
+
 		dbg("entering start_heartbeat")
-		@clock = Clock.new
-		loop do
-			sleep 1
-			@clock.tick(1)
+
+		@heartbeat_pid = Thread.new{
+			@clock = Clock.new
+			loop do
+				sleep 1
+				@clock.tick(1)
 			dbg @clock.get_time
-		end
+			end
+		}
+
 	end
 
 
@@ -164,9 +179,6 @@ if ARGV.length != 2
   exit(1)
 end
 
-@config_file_name = ARGV[0]
-@node_name = ARGV[1]
-master = Thread.new{main}
-start_heartbeat()       
+main   
 
 

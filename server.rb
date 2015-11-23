@@ -65,7 +65,7 @@ class Server
 
   def send_message(server_node, msg)
     Thread.new do
-      server_ip = get_address(server_node)
+      server_ip = server_node[1]     
       begin
         s = Client.new(server_ip, 7000)
         s.send(msg)
@@ -84,7 +84,7 @@ class Server
 
 
   def get_address(node)
-    @neighbors.each do |n|
+    node.each do |n|
       if n[0] == node 
         return n[1]
       end

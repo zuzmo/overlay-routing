@@ -1,13 +1,12 @@
 require 'socket'
 
-require_relative 'utility'
-require_relative 'server'
 require_relative 'debug'
 require_relative 'logger'
-
+require_relative 'server'
+require_relative 'utility'
 
 #==============================================================================
-# 0. Read config and nodename as args
+# 0. Read args from stdin
 #==============================================================================
 if ARGV.length != 2
   puts "Invalid number of arguments."
@@ -15,35 +14,31 @@ if ARGV.length != 2
   exit(1)
 end
 
-$config_file = ARGV[0]
-$node_name = ARGV[1]
-Logger.init($node_name)
-puts "#{$config_file} #{$node_name}"
+config_file = ARGV[0]
+node_name = ARGV[1]
+
+Logger.init(node_name)
 
 #==============================================================================
-# 1. Read config files (config and weights.csv)
+# 1. Read config files (config and weights.csv) and build neighbors map
 #==============================================================================
-config_options = Utility.read_config($config_file)
-$update_interval = config_options['updateInterval']
-$weight_file = config_options['weightFile']
+config_options = Utility.read_config(config_file)
+update_interval = config_options['updateInterval'].to_i()
+weight_file = config_options['weightFile']
 
-$neighbors_map, $link_cost_map = Utility.read_link_costs('weights.csv')
-puts "#{$update_interval}"
-puts "#{$weight_file}"
-puts "#{$neighbors_map} #{$link_cost_map}"
-
-#==============================================================================
-# 2. Start server to accept connections and
-# attempt to connect to neighbors every 5 sec.)
-# Start link state every updateInterval
+# neighbors_map, link_cost_map = Utility.read_link_costs(weight_file)
+# puts "#{update_interval}"
+# puts "#{weight_file}"
+# puts "#{neighbors_map} #{link_cost_map}"
 
 #==============================================================================
-neighbors = $neighbors_map[$node_name]
-# puts "#{neighbors_to_connect}"
-# starts server in an separate thread
-server = Server.new($node_name, 7000, neighbors)
-server.run
-# server.monitor_link_state
+# 2. Run server to accept connections and establish connections to 
+# other servers as client
+#==============================================================================
+# neighbors = neighbors_map[node_name]
+server = Server.new(node_name, 7000, update_interval, weight_file)		
+server.run() 									# runs server in a separate thread
+server.do_routing_update()
 
 #==============================================================================
 # 3. 
@@ -58,6 +53,7 @@ loop do
       file_name = user_input.split(" ")[1]
       #todo
     when /^FORCEUPDATE/
+    	server.do_link_state
       #todo
     when /^CHECKSTABLE/
       #todo

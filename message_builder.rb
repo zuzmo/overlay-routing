@@ -1,16 +1,25 @@
 require 'json'
 
-class Messages
+class MessagesBuilder
 
-	def self.create_flood_message(sender,sequence)
+	@@sequence_number = 1
+
+
+	def get_Sequence_number
+		@@sequence_number
+	end
+
+
+	def self.create_flood_message(sender)
 		flood_message = {
 				"HEADER" =>
 						{"TYPE" => "FLOOD",
 						 "SENDER" => "#{sender}",
-						 "SEQUENCE" => "#{sequence}"
+						 "SEQUENCE" => @@sequence_number
 			  }
 		}
 
+		@@sequence_number += 1
 		flood_message.to_json
 	end
 

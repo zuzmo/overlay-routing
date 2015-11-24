@@ -16,14 +16,12 @@ require 'thread'
 	def main
 
  		 dbg("entering main()")
-
 		 @config_file_name = ARGV[0]
 		 @node_name = ARGV[1]
 		 Logger.init(@node_name)
 		 start_heartbeat()    
 		 read_config_file()
 	     start_server()
-	     start_flood_timer()
 	     listen_for_hook()
 	     dbg("done main()")
 	end
@@ -41,48 +39,7 @@ require 'thread'
 	end
 
 
-	def start_flood_timer	
-		dbg("entering start_flood_timer()")
-		@flood_timer_pid = Thread.new{
-			loop do	
-				#sleep @update_interval.to_i
-				sleep 3
-				start_flood()
-			end
-		}
-		dbg("exiting start_flood_timer()")
-	end
 
-
-	def start_flood
-		dbg("entering start_flood()")
-		#f = packet_creator.create_flood_packet
-		flood_message = Messages.create_flood_message(@node_name,443)
-		#for each neighbor n
-		for neighbor in @hostname_ip_map[@node_name].each do					
- 			
- 		
- 			# client.new.connect(n).send_flood_packet(f)
-		    #client.send
-		    #client.close
-			 @server.send_message(neighbor,flood_message)					
-		end
-
-		#server.listen for packets p
-		#    p.check sender
-		#      if sender.sequence > sender.curr_sequence 
-		#          store. for all neighbors n
-		#             client.new.connect(n).send_flood_packet(p)
-		#             c.close       
-		#      else ignore
-		# if number of packets stored == num_of_nodes 
-		#     send all packets to graph to be processed
-		#     update forwarding table
-		# else
-		#     wait or time_out
-
-		dbg("exiting start_flood()")
-	end
 
 
 	# =========================================================================

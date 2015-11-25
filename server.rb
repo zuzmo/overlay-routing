@@ -1,4 +1,5 @@
 require 'socket'
+require 'json'
 
 require_relative 'client'
 require_relative 'logger'
@@ -16,7 +17,13 @@ class Server
     @neighbors = nil                      # init in do_routing_update
     @server_socket = TCPServer.open('', port)
     @routing_update_thread = nil
-    
+    @sequence_numbers = Hash.new
+    @flood_mutex = Mutex.new
+    @flood_resource = ConditionVariable.new
+    @flood_queue = Queue.new
+    @flood_state = false
+    @queue = Queue.new
+    sleep(1)
     # @clients = Queue.new     # connections accepted by this server
     # @servers = Queue.new     # connections requested to other servers (as client)
   end
@@ -29,7 +36,7 @@ class Server
         Thread.start(@server_socket.accept) do |client|
           peeraddr = get_peer_address(client)
           # @clients << client
-          Logger.info("accepted connection to #{peeraddr}")
+          # Logger.info("accepted connection to #{peeraddr}")
           receive_message(client)
           client.close
         end
@@ -40,26 +47,32 @@ class Server
   def do_routing_update
     @routing_update_thread = Thread.new do
       loop {
-        do_link_state_algorithm
+        @flood_mutex.synchronize {
+          if @flood_state == false
+            initiate_flooding
+            @flood_state = true   # started flooding
+            puts "set to : #{@flood_state}"
+            STDOUT.flush
+          end
+        }
+
         sleep(@update_interval)
       }
     end
   end
 
-  def do_link_state_algorithm
+  def initiate_flooding
     Logger.info("updating routing table")
+
+    # TODO: add lock
     @link_costs_map, _ = Utility.read_link_costs(@weight_file)
     @neighbors = @link_costs_map[node_name]
     flood_message = MessageBuilder.create_flood_message(@node_name, @neighbors)
     neighbor_names = @neighbors.clone
 
-
-    # neighbor_names.each{ |n| puts n[0], flood_message }
-    # puts neighbor_names
     for neighbor in neighbor_names.each do
-       send_message(neighbor[0],flood_message)         
+       send_message(neighbor[0], flood_message)         
     end
-
   end
 
   def do_forced_link_state
@@ -68,37 +81,77 @@ class Server
   end
 
 
-  def monitor_link_state
-    Thread.new do
-      if @neighbors == nil    # may not have peers to connect to
-        return
-      end
-      loop {
-        @neighbors.each do |ip|
-          begin
-            s = Client.new(ip[1], 7000)
-            # Logger.info("connection succeeded to #{ip}")
-            s.close
-          rescue Exception => e
-            Logger.error("#{e} #{ip}")
-          end
-        end
-        sleep(2)
-      }
-    end
-  end
-
-
   def receive_message(client_node)
     puts "handling message..."
-    puts client_node.read
+    STDOUT.flush
+    msg = client_node.read
+    parsed_msg = JSON.parse(msg)
+    header = parsed_msg['HEADER']
 
-    # loop {
-    #   msg = client.gets.chomp
-    #   # TODO: route messages
-    #   puts "#{msg}"
-    # }
+    if header['TYPE'] == 'FLOOD'
+      @flood_queue << parsed_msg
+    else
+      @queue << parsed_msg
+    end
     
+  end
+
+  def flood_message_handler
+    Thread.new do
+      loop {
+
+        parsed_msg = @flood_queue.pop
+        puts @flood_state
+        STDOUT.flush
+        @flood_mutex.synchronize {
+          if @flood_state == false   # flooding has not started
+            # send one flood message
+            initiate_flooding
+            @flood_state = true
+          end
+        }
+        sender = parsed_msg['HEADER']['SENDER']
+        seq = parsed_msg['HEADER']['SEQUENCE']
+
+        # puts "#{sender} > #{seq}"
+        neighbor_names = @neighbors.clone
+
+        if @sequence_numbers.has_key?(sender)
+          # compare
+          if @sequence_numbers[sender] < seq
+            # update
+            @sequence_numbers[sender] = seq
+            # send messages
+            for neighbor in neighbor_names.each do
+              if neighbor[0] != sender
+                send_message(neighbor[0],parsed_msg.to_json)    
+              end     
+            end
+          end
+
+        else
+          # add it
+          # update
+          @sequence_numbers[sender] = seq
+          # send messages
+          for neighbor in neighbor_names.each do
+            if neighbor[0] != sender
+              send_message(neighbor[0],parsed_msg.to_json)    
+            end     
+          end
+
+        end
+
+        if @sequence_numbers.length == 3
+          puts @sequence_numbers 
+          STDOUT.flush
+          @flood_mutex.synchronize {
+            @flood_state = false
+          }
+          @sequence_numbers = Hash.new
+        end
+      }
+    end
   end
 
   def send_message(server_node, msg)
@@ -111,6 +164,7 @@ class Server
       server_ip = get_address(server_node)
       if server_ip == 'unreachable'
         puts 'SENDMSG ERROR: HOST UNREACHABLE'
+        STDOUT.flush
       else
         begin
           s = Client.new(server_ip, 7000)
@@ -146,52 +200,28 @@ class Server
     @server_socket.close
   end
 
+
+
+
+    def monitor_link_state
+    Thread.new do
+      if @neighbors == nil    # may not have peers to connect to
+        return
+      end
+      loop {
+        @neighbors.each do |ip|
+          begin
+            s = Client.new(ip[1], 7000)
+            # Logger.info("connection succeeded to #{ip}")
+            s.close
+          rescue Exception => e
+            Logger.error("#{e} #{ip}")
+          end
+        end
+        sleep(2)
+      }
+    end
+  end
+
   attr_reader :node_name, :server_socket
 end
-
-
-# server = Server.new('n1', 7000, {})
-# t1 = Thread.new do
-#   server = TCPServer.open('10.0.0.20', 7000)
-#   puts server.addr
-#   loop do
-#     Thread.start(server.accept) do |client|
-      
-#       msg = client.gets.chomp
-#       puts "#{msg}"
-#       # puts server.addr
-#       # puts Thread.current.object_id
-#       # client.puts(Time.now.ctime)
-#       # client.puts "Closing the connection. Bye!"
-#       # client.puts "Other line"
-#       # client.close
-#     end
-#   end
-# end
-
-# t1.join
-
-
-
-
-
-# hostname = 'localhost'
-# port = 2000
-
-# Thread.new do
-# 	socket = TCPSocket.open(hostname, port)
-
-# 	# line = gets
-# 	# put line
-# 	puts socket.gets
-# 	socket.puts "Client"
-# 	socket.puts Thread.current.object_id
-# 	socket.close
-# end
-
-# i = 0
-# loop do
-#   puts "And the script is still running (#{i})..."
-#   i += 1
-#   sleep 1
-# end

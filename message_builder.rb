@@ -9,7 +9,7 @@ class MessageBuilder
 				"HEADER" =>
 						{"TYPE" => "FLOOD",
 						 "SENDER" => "#{sender}",
-						 "SEQUENCE" => "#{@@flood_msg_seq}"
+						 "SEQUENCE" => @@flood_msg_seq
 						 },
 				"PAYLOAD" => "#{payload}"
 		}

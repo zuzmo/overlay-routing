@@ -40,7 +40,7 @@ server = Server.new(node_name, 7000, update_interval, weight_file)
 server.run() 									# runs server in a separate thread
 server.do_routing_update()
 
-server.flood_message_handler()
+# server.handle_flood_messages()
 
 #==============================================================================
 # 3. 

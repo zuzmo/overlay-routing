@@ -10,73 +10,27 @@ class Utility
 			f.each_line do |line|
 				line.chomp!
 				next if line.empty?
-				key, val = line.split(',')
-				key.strip!
-				val.strip!
+				key, val = line.split('=')
+				key.strip!; val.strip!
 				options[key] = val
 			end
 		end
-		return options
+		options
 	end
 
 	# =========================================================================
 	# Reads the config file containing the cost for each of
-	# its outgoing links and returns two Hashes.
-	# 1st. Hash:
-	# 		maps node names to an array of arrays containing interfaces 
-	#		(e.g. {'n1' => [['n2', '10.0.0.21'], [n3 , '10.0.4.21']] })
-	# 2nd. Hash:
-	#		maps ip address to a Hash of ip addresses with their costs 
-	#		(e.g. '10.0.0.20' => { '10.0.4.20' => 1 })
-	# =========================================================================
-	def self.read_link_costs_old(path)
-		neighbors_map = Hash.new
-		link_cost_map = Hash.new
-		File.open(path, 'r') do |f|
-			f.each_line do |line|
-				line.chomp!
-				next if line.empty?
-				node_a, ip_a, node_b, ip_b, cost = line.split(',')
-				node_a.strip!; ip_a.strip!; node_b.strip!; ip_b.strip!; cost.strip!
-				
-				if neighbors_map.has_key?(node_a)
-					ip_array = neighbors_map[node_a]
-					ip_array.push(Array[node_b, ip_b, cost])
-				else
-					neighbors_map[node_a] = Array[Array[node_b, ip_b, cost]]
-				end
-
-				# TODO change code here
-				if link_cost_map.has_key?(ip_a)
-					sub_map = @link_cost_map[ip_a]
-					sub_map[ip_b] = cost
-				else
-					link_cost_map[ip_a] = {ip_b => cost}
-				end
-				# if link_cost_map.has_key?(ip_b)
-				# 	sub_map = @link_cost_map[ip_b]
-				# 	sub_map[ip_a] = cost
-				# else
-				# 	link_cost_map[ip_b] = {ip_a => cost}
-				# end
-			end
-		end
-		return neighbors_map, {}
-	end
-
-	# =========================================================================
-	# Reads the config file containing the cost for each of
-	# its outgoing links and returns two Hashes.
-	# 1st. Hash:
-	# 		maps source name to hash of neighbors
-	#		(e.g. {'n1' => { 'n2' => ['10.0.0.21', 1], 'n3' => ['10.0.4.21', 2] })
-	# 2nd. Hash:
-	#		empty 
-	#		(e.g. { })
+	# its outgoing links and returns two Hash of Hashes.
+	# 1st. Hash (cost_map):
+	#		(e.g. { 'n1' => { 'n2' => 1, 'n3' => 1 },
+	#				'n2' => { 'n1' => 1, 'n3' => 1 } }
+	# 2nd. Hash (ip_map):
+	#		(e.g. { 'n1' => { 'n2' => '10.0.0.21', 'n3' => '10.0.4.21' },
+	#				'n2' => { 'n1' => '10.0.0.20', 'n3' => '10.0.1.21' } }
 	# =========================================================================
 	def self.read_link_costs(path)
-		costs_map = Hash.new
-		hostname_ip_map = Hash.new
+		cost_map = Hash.new
+		ip_map = Hash.new
 		File.open(path, 'r') do |f|
 			f.each_line do |line|
 				line.chomp!
@@ -84,36 +38,56 @@ class Utility
 				node_a, ip_a, node_b, ip_b, cost = line.split(',')
 				node_a.strip!; ip_a.strip!; node_b.strip!; ip_b.strip!; cost.strip!
 				
-				if costs_map.has_key?(node_a)
-					neighbors_map = costs_map[node_a]
-					neighbors_map[node_b] = Array[ip_b, cost]
+				if cost_map.has_key?(node_a)
+					neighbors_map = cost_map[node_a]
+					neighbors_map[node_b] = cost.to_i
 				else
-					costs_map[node_a] = { node_b => Array[ip_b, cost] }
+					cost_map[node_a] = { node_b => cost.to_i }
 				end
 
-				if costs_map.has_key?(node_b)
-					neighbors_map = costs_map[node_b]
-					neighbors_map[node_a] = Array[ip_a, cost]
+				if cost_map.has_key?(node_b)
+					neighbors_map = cost_map[node_b]
+					neighbors_map[node_a] = cost.to_i
 				else
-					costs_map[node_b] = { node_a => Array[ip_a, cost] }
+					cost_map[node_b] = { node_a => cost.to_i }
 				end
-		
-				# if hostname_ip_map.has_key?(node_a)
-				# 	sub_map = hostname_ip_map[node_a]
-				# 	sub_map[ip_b] = cost
-				# else
-				# 	hostname_ip_map[ip_a] = {ip_b => cost}
-				# end
-				# if link_cost_map.has_key?(ip_b)
-				# 	sub_map = @link_cost_map[ip_b]
-				# 	sub_map[ip_a] = cost
-				# else
-				# 	link_cost_map[ip_b] = {ip_a => cost}
-				# end
+
+				if ip_map.has_key?(node_a)
+					neighbors_map = ip_map[node_a]
+					neighbors_map[node_b] = ip_b
+				else
+					ip_map[node_a] = { node_b => ip_b }
+				end
+
+				if ip_map.has_key?(node_b)
+					neighbors_map = ip_map[node_b]
+					neighbors_map[node_a] = ip_a
+				else
+					ip_map[node_b] = { node_a => ip_a }
+				end
 			end
 		end
-		return costs_map, {}
+		return cost_map, ip_map
 	end
+
+	# =========================================================================
+	# Reads the file containing the node ports and returns a Hash
+	# (e.g. { 'n1' => 5000, 'n2' => 5001)
+	# =========================================================================
+	def self.read_ports(path)
+		node_port_map = Hash.new
+		File.open(path, 'r') { |f|
+			f.each_line do |line|
+				line.chomp!
+				next if line.empty?
+				node_name, port = line.split('=')
+				node_name.strip!; port.strip!
+				node_port_map[node_name] = port
+			end
+		}
+		node_port_map
+	end
+
 
 	# =========================================================================
 	# Creates a file if it doesn't already exists and writes a string to it.

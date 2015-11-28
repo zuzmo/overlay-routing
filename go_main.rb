@@ -1,73 +1,84 @@
 require 'socket'
 
 require_relative 'debug'
+require_relative 'link_state_manager'
 require_relative 'logger'
+require_relative 'send_message_handler'
 require_relative 'server'
 require_relative 'utility'
 
-#==============================================================================
+#==========================================================
 # 0. Read args from stdin
-#==============================================================================
+#==========================================================
 if ARGV.length != 2
   puts "Invalid number of arguments."
   puts "Usage: ruby main.rb config <node_name>"
   exit(1)
 end
 
-config_file = ARGV[0]
-node_name = ARGV[1]
+config_file		= ARGV[0]
+$__node_name 	= ARGV[1]
 
-Logger.init(node_name)
+# Logger.init($node_name)
+Thread.abort_on_exception = true;
 
-#==============================================================================
-# 1. Read config files (config and weights.csv) and build neighbors map
-#==============================================================================
-config_options = Utility.read_config(config_file)
-update_interval = config_options['updateInterval'].to_i()
-weight_file = config_options['weightFile']
+#==========================================================
+# 1. Read config files (config, weights.csv, and nodes.txt)
+# and build neighbors map
+#==========================================================
+config_options 		= Utility.read_config(config_file)
 
-# neighbors_map, link_cost_map = Utility.read_link_costs(weight_file)
-# puts "#{update_interval}"
-# puts "#{weight_file}"
-# puts "#{neighbors_map} #{link_cost_map}"
+$__update_interval 	= config_options['updateInterval'].to_i
+$__weight_file 		= config_options['weightFile']
+$__nodes_file		= config_options['nodes']
+$__max_packet_size 	= config_options['maxPacketSize'].to_i
+$__ping_timeout		= config_options['pingTimeout']
+$__node_ports		= Utility.read_ports($__nodes_file)
 
-#==============================================================================
-# 2. Run server to accept connections and establish connections to 
-# other servers as client
-#==============================================================================
-# neighbors = neighbors_map[node_name]
-server = Server.new(node_name, 7000, update_interval, weight_file)		
-server.run() 									# runs server in a separate thread
-server.do_routing_update()
+#==========================================================
+# 2. Run server to accept connections
+#==========================================================
+$__port = $__node_ports[$__node_name]
+Thread.new {Server.run($__node_name, $__port)}
 
-# server.handle_flood_messages()
+#==========================================================
+# 2. Broadcast link state every updateInterval seconds
+#==========================================================
+Thread.new do
+	sleep(1) # wait for other servers to start up
+	loop {
+		LinkStateManager.broadcast_link_state
+		sleep($__update_interval)
+	}
+end
 
-#==============================================================================
-# 3. 
-#==============================================================================
+#==========================================================
+# 3. Handle flood messages
+#==========================================================
+# Thread.new {LinkStateManager.handle_flooding}
 
-
+#==========================================================
+# 4. Read commands from stdin
+#==========================================================
 loop do 
-    user_input = STDIN.gets.chomp                               #blocks while waiting for user input
+
+    user_input = STDIN.gets.chomp
     
     case user_input
     when /^DUMPSTABLE\s[\w\d\.]*/
       file_name = user_input.split(" ")[1]
       #todo
     when /^FORCEUPDATE/
-    	server.do_link_state
-      #todo
+    	LinkStateManager.broadcast_link_state
     when /^CHECKSTABLE/
       #todo
     when /^shutdown/
-      server.shutdown
       exit(1)
     when /^debug/
       Debug.dump(server)
     when /^send\s+(.+)\s+"(.+)"/
-      node = $1
-      msg = $2
-      server.send_message(node, msg)
+      dst, msg = $1, $2
+      SendMessageHandler.handle_from_console(dst, msg)
     else
       puts "try again"
     end

@@ -13,7 +13,7 @@ class LinkStateManager
 		#---------------------------------------------------
         # read costs file
         #---------------------------------------------------
-        cost_map, ip_map = Utility.read_link_costs($__weight_file)
+        cost_map, ip_map, _ = Utility.read_link_costs($__weight_file)
 
         neighbors_cost_map = cost_map[$__node_name]
         neighbors_ip_map = ip_map[$__node_name]
@@ -39,9 +39,9 @@ class LinkStateManager
         #---------------------------------------------------
         flood_msg = MessageBuilder.create_flood_message($__node_name, link_state_message)
         link_state_message.each do |neighbor, cost|
-          ip, _ = neighbors[neighbor]
+          ip, _ = neighbors_cost_map[neighbor]
           port = $__node_ports[neighbor]
-          # puts "flodd: #{flood_msg}, name: #{name}, ip: #{ip}, port: #{port}"
+          puts "flodd: #{flood_msg}, name: #{neighbor}, ip: #{ip}, port: #{port}"
           # Client.send(flood_msg, ip, port)
         end
 	end

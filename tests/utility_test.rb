@@ -1,5 +1,7 @@
 require 'test/unit'
 
+require_relative '../utility'
+
 class UtilityTest < Test::Unit::TestCase
 
   # Called before every test method runs. Can be used
@@ -18,6 +20,9 @@ class UtilityTest < Test::Unit::TestCase
   # Fake test
   def test_fail
 
-    fail('Not implemented')
+    cost_map, ip_map, interface_map = Utility.read_link_costs('../../overlay-routing/weights.csv')
+    puts cost_map
+    puts ip_map
+    puts interface_map
   end
 end

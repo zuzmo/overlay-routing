@@ -27,10 +27,14 @@ class Utility
 	# 2nd. Hash (ip_map):
 	#		(e.g. { 'n1' => { 'n2' => '10.0.0.21', 'n3' => '10.0.4.21' },
 	#				'n2' => { 'n1' => '10.0.0.20', 'n3' => '10.0.1.21' } }
+	# 3rd. Hash (interfaces_map):
+	# 		(e.g. { 'n1' => ['10.0.0.20', '10.0.4.20'], 
+	#  				'n2' => ['10.0.0.21']})
 	# =========================================================================
 	def self.read_link_costs(path)
 		cost_map = Hash.new
 		ip_map = Hash.new
+		interfaces_map = Hash.new
 		File.open(path, 'r') do |f|
 			f.each_line do |line|
 				line.chomp!
@@ -38,6 +42,7 @@ class Utility
 				node_a, ip_a, node_b, ip_b, cost = line.split(',')
 				node_a.strip!; ip_a.strip!; node_b.strip!; ip_b.strip!; cost.strip!
 				
+				# 1st map
 				if cost_map.has_key?(node_a)
 					neighbors_map = cost_map[node_a]
 					neighbors_map[node_b] = cost.to_i
@@ -52,6 +57,7 @@ class Utility
 					cost_map[node_b] = { node_a => cost.to_i }
 				end
 
+				# 2nd map
 				if ip_map.has_key?(node_a)
 					neighbors_map = ip_map[node_a]
 					neighbors_map[node_b] = ip_b
@@ -65,9 +71,25 @@ class Utility
 				else
 					ip_map[node_b] = { node_a => ip_a }
 				end
+
+				# 3rd map
+				if interfaces_map.has_key?(node_a)
+					interface_arr = interfaces_map[node_a]
+					interface_arr << ip_a
+				else
+					interfaces_map[node_a] = [ip_a]
+				end
+
+				if interfaces_map.has_key?(node_b)
+					interface_arr = interfaces_map[node_b]
+					interface_arr << ip_b
+				else
+					interfaces_map[node_b] = [ip_b]
+				end
+
 			end
 		end
-		return cost_map, ip_map
+		return cost_map, ip_map, interfaces_map
 	end
 
 	# =========================================================================

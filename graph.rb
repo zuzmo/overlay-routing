@@ -1,4 +1,9 @@
-# Comments
+
+require_relative 'utility'
+
+# TODO:
+# 1. Sort the hash by keys of keys.
+#
 class Graph
 
   def initialize
@@ -37,7 +42,17 @@ class Graph
     @adjacency_map.to_s
   end
 
-  def min_distance()
+  def create_graph
+    cost_map, ip_map =  Utility.read_link_costs("./s1/weights.csv")
+
+    cost_map.keys.each do |src|
+      cost_map[src].each do |dest, cost|
+        add_directed_edge(src, dest, cost)
+      end
+    end
+  end
+
+  def min_distance
 
     min = Float::INFINITY
     vertex = String.new
@@ -49,7 +64,7 @@ class Graph
       end
     end
 
-    return vertex
+    vertex
   end
 
   def dijkstra(graph, src)
@@ -57,6 +72,7 @@ class Graph
     @visited = {}
     @prev = {}
 
+    cost = 0
     for v in graph.get_all_nodes
       @dist[v] = Float::INFINITY
       @visited[v] = false
@@ -71,7 +87,7 @@ class Graph
 
       graph.get_neighbors(u).each do |v, array|
         alt = @dist[u] + graph.get_cost(u, v)
-        if (alt < @dist[v])
+        if alt < @dist[v]
           @dist[v] = alt
           @prev[v] = u
         end
@@ -102,7 +118,7 @@ class Graph
       @path_to_all_dest[dest] = @path_to_dest[dest]
     end
 
-    return @path_to_all_dest
+     @path_to_all_dest
   end
 
   def src_to_dest(graph, src, dest)
@@ -111,7 +127,8 @@ class Graph
     dijkstra(graph, src)
     print_path(dest, dest)
 
-    return @path_to_dest
+
+    return @path_to_dest[dest].inspect, @dist[dest]
   end
 
   def forwarding_table(graph, src)
@@ -132,7 +149,7 @@ class Graph
     end
 
 
-    return @link
+    @link
   end
 
 end

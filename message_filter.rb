@@ -13,11 +13,11 @@ class MessageFilter
 
 		type = parsed_msg['HEADER']['TYPE']
 		
-		if type == 'HELLO'
+		if 		type 	== 'HELLO'
 			HelloMessageHandler.handle(parsed_msg)
-		elsif type == 'FLOOD'
+		elsif 	type 	== 'FLOOD'
 			FloodMessageHandler.handle(parsed_msg)
-		elsif type == 'SENDMSG'
+		elsif 	type 	== 'SENDMSG'
 			SendMessageHandler.handle(parsed_msg)
 		end
 	end

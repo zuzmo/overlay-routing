@@ -39,23 +39,40 @@ class LinkStateManager
         #---------------------------------------------------
         flood_msg = MessageBuilder.create_flood_message($__node_name, link_state_message)
         link_state_message.each do |neighbor, cost|
-          ip, _ = neighbors_cost_map[neighbor]
+          ip, _ = neighbors_ip_map[neighbor]
           port = $__node_ports[neighbor]
-          puts "flodd: #{flood_msg}, name: #{neighbor}, ip: #{ip}, port: #{port}"
-          # Client.send(flood_msg, ip, port)
+          # puts "flodd: #{flood_msg}, name: #{neighbor}, ip: #{ip}, port: #{port}"
+          Client.send(flood_msg, ip, port)
         end
 	end
 
 
 	@@parsed_flood_mgs = Queue.new
 	def self.handle_flooding
+		sequence_tracker = {}
 		loop {
 			parsed_flood_msg = @@parsed_flood_mgs.pop	# block waiting for flood message
 			# puts "new msg: #{parsed_flood_msg}"
-			sender = parsed_flood_msg['HEADER']['SENDER']
-			sequence = parsed_flood_msg['HEADER']['SEQUENCE']
-			puts "#{sender}, #{sequence}"
+			from_sender = parsed_flood_msg['HEADER']['SENDER']
+			new_sequence = parsed_flood_msg['HEADER']['SEQUENCE']
+			puts "#{from_sender}, #{new_sequence}"
 
+			if sequence_tracker.has_key?(from_sender)
+				# compare
+				curr_seq = sequence_tracker[from_sender]
+				if new_sequence > curr_seq
+					# update (store and forward)
+					sequence_tracker[from_sender] = new_sequence
+				else
+					# ignore it
+				end
+			else
+				sequence_tracker[from_sender] = new_sequence
+				# update (store and forward)
+
+			end
+
+			puts sequence_tracker
 
 
 		}

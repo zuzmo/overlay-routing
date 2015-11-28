@@ -1,13 +1,9 @@
 require 'json'
 
-require_relative 'utility'
-require_relative 'packet_builder'
-
 #==========================================================
 # Fragmenter converts a message into packets depending on 
 # the maxPacketSize option in the config file.
 #==========================================================
-require 'json'
 
 class Defragmenter
 

@@ -55,7 +55,7 @@ end
 #==========================================================
 # 3. Handle flood messages
 #==========================================================
-# Thread.new {LinkStateManager.handle_flooding}
+Thread.new {LinkStateManager.handle_flooding}
 
 #==========================================================
 # 4. Read commands from stdin

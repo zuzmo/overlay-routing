@@ -68,15 +68,15 @@ class Utility
 	# Reads the config file containing the cost for each of
 	# its outgoing links and returns two Hashes.
 	# 1st. Hash:
-	# 		maps source name to its neighbors including costs
-	#		(e.g. {'n1' => [['n2', '10.0.0.21', 1], [n3 , '10.0.4.21', 2]] })
+	# 		maps source name to hash of neighbors
+	#		(e.g. {'n1' => { 'n2' => ['10.0.0.21', 1], 'n3' => ['10.0.4.21', 2] })
 	# 2nd. Hash:
-	#		maps ip address to a Hash of ip addresses with their costs 
-	#		(e.g. '10.0.0.20' => { '10.0.4.20' => 1 })
+	#		empty 
+	#		(e.g. { })
 	# =========================================================================
 	def self.read_link_costs(path)
-		neighbors_map = Hash.new
-		link_cost_map = Hash.new
+		costs_map = Hash.new
+		hostname_ip_map = Hash.new
 		File.open(path, 'r') do |f|
 			f.each_line do |line|
 				line.chomp!
@@ -84,27 +84,26 @@ class Utility
 				node_a, ip_a, node_b, ip_b, cost = line.split(',')
 				node_a.strip!; ip_a.strip!; node_b.strip!; ip_b.strip!; cost.strip!
 				
-				if neighbors_map.has_key?(node_a)
-					ip_array = neighbors_map[node_a]
-					ip_array.push(Array[node_b, ip_b, cost])
+				if costs_map.has_key?(node_a)
+					neighbors_map = costs_map[node_a]
+					neighbors_map[node_b] = Array[ip_b, cost]
 				else
-					neighbors_map[node_a] = Array[Array[node_b, ip_b, cost]]
+					costs_map[node_a] = { node_b => Array[ip_b, cost] }
 				end
 
-				if neighbors_map.has_key?(node_b)
-					ip_array = neighbors_map[node_b]
-					ip_array.push(Array[node_a, ip_a, cost])
+				if costs_map.has_key?(node_b)
+					neighbors_map = costs_map[node_b]
+					neighbors_map[node_a] = Array[ip_a, cost]
 				else
-					neighbors_map[node_b] = Array[Array[node_a, ip_a, cost]]
+					costs_map[node_b] = { node_a => Array[ip_a, cost] }
 				end
-
-				# TODO change code here
-				if link_cost_map.has_key?(ip_a)
-					sub_map = @link_cost_map[ip_a]
-					sub_map[ip_b] = cost
-				else
-					link_cost_map[ip_a] = {ip_b => cost}
-				end
+		
+				# if hostname_ip_map.has_key?(node_a)
+				# 	sub_map = hostname_ip_map[node_a]
+				# 	sub_map[ip_b] = cost
+				# else
+				# 	hostname_ip_map[ip_a] = {ip_b => cost}
+				# end
 				# if link_cost_map.has_key?(ip_b)
 				# 	sub_map = @link_cost_map[ip_b]
 				# 	sub_map[ip_a] = cost
@@ -113,7 +112,7 @@ class Utility
 				# end
 			end
 		end
-		return neighbors_map, {}
+		return costs_map, {}
 	end
 
 	# =========================================================================

@@ -65,7 +65,7 @@ loop do
     user_input = STDIN.gets.chomp
     
     case user_input
-    when /^DUMPSTABLE\s[\w\d\.]*/
+    when /^DUMPTABLE\s[\w\d\.]*/
       file_name = user_input.split(" ")[1]
       #todo
     when /^FORCEUPDATE/

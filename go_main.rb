@@ -51,6 +51,7 @@ Thread.new do
 		sleep($__update_interval)
 	}
 end
+sleep(2)
 
 #==========================================================
 # 3. Handle flood messages
@@ -71,8 +72,8 @@ loop do
     when /^FORCEUPDATE/
     	LinkStateManager.broadcast_link_state
     when /^CHECKSTABLE/
-      #todo
-    when /^shutdown/
+    	LinkStateManager.check_stable?
+    when /^SHUTDOWN/
       exit(1)
     when /^debug/
       Debug.dump(server)

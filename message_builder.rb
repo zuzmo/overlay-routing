@@ -10,13 +10,15 @@ class MessageBuilder
 	end
 
 
-	@@flood_msg_seq =  0
+	@@flood_msg_seq =  -1
 	def self.create_flood_message(sender, payload)
 		@@flood_msg_seq += 1
 		{
 			'HEADER' 	=> {	'TYPE' 		=> 'FLOOD',
 								'SENDER' 	=> "#{sender}",
-								'SEQUENCE' 	=> @@flood_msg_seq
+								'FORWARDER' => "#{sender}",
+								'SEQUENCE' 	=> @@flood_msg_seq,
+								'AGE'		=> 0
 							},
 			'PAYLOAD' 	=> "#{payload}"
 		}.to_json

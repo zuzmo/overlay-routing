@@ -1,4 +1,3 @@
-
 require_relative 'utility'
 
 # TODO:
@@ -6,8 +5,14 @@ require_relative 'utility'
 #
 class Graph
 
-  def initialize
+  def initialize(link_state_table)
     @adjacency_map = Hash.new
+    @dist = {}
+    @visited = {}
+    @prev = {}
+    @path_to_all_dest = {}
+    @path_to_dest = {}
+    create_graph(link_state_table)
   end
 
   # Adds two directed edges to appear as a non-directed edge
@@ -42,12 +47,14 @@ class Graph
     @adjacency_map.to_s
   end
 
-  def create_graph
-    cost_map, ip_map =  Utility.read_link_costs("./s1/weights.csv")
+  # Creates the graph from the weights file.
+  def create_graph(cost_map)
 
     cost_map.keys.each do |src|
       cost_map[src].each do |dest, cost|
-        add_directed_edge(src, dest, cost)
+        if(cost != "Infinity")
+          add_edge(src, dest, cost)
+        end
       end
     end
   end
@@ -67,13 +74,10 @@ class Graph
     vertex
   end
 
-  def dijkstra(graph, src)
-    @dist = {}
-    @visited = {}
-    @prev = {}
+  def dijkstra( src)
 
     cost = 0
-    for v in graph.get_all_nodes
+    for v in get_all_nodes
       @dist[v] = Float::INFINITY
       @visited[v] = false
       @prev[v] = -1
@@ -81,12 +85,12 @@ class Graph
 
     @dist[src] = 0
 
-    graph.get_all_nodes.each do |vertex|
+    get_all_nodes.each do |vertex|
       u = min_distance
       @visited[u] = true
 
-      graph.get_neighbors(u).each do |v, array|
-        alt = @dist[u] + graph.get_cost(u, v)
+      get_neighbors(u).each do |v, array|
+        alt = @dist[u] + get_cost(u, v)
         if alt < @dist[v]
           @dist[v] = alt
           @prev[v] = u
@@ -98,50 +102,48 @@ class Graph
 
   def print_path(dest, fin_dest)
 
-    @dest_path = []
+    dest_path = []
     if @prev[dest] != -1
       print_path(@prev[dest], fin_dest)
     end
-    @dest_path.push(dest)
+    dest_path.push(dest)
 
     if dest == fin_dest
-      @path_to_dest[fin_dest] = @dest_path
+      @path_to_dest[fin_dest] = dest_path
     end
 
   end
 
-  def src_to_all_dest(graph, src)
+  def src_to_all_dest( src)
 
-    @path_to_all_dest = {}
-    graph.get_all_nodes.each do |dest|
-      src_to_dest(graph, src, dest)
+
+    get_all_nodes.each do |dest|
+      src_to_dest( src, dest)
       @path_to_all_dest[dest] = @path_to_dest[dest]
     end
 
-     @path_to_all_dest
+    @path_to_all_dest
   end
 
-  def src_to_dest(graph, src, dest)
+  def src_to_dest( src, dest)
 
-    @path_to_dest = {}
-    dijkstra(graph, src)
+    dijkstra(src)
     print_path(dest, dest)
 
-
-    return @path_to_dest[dest].inspect, @dist[dest]
+    return @path_to_dest[dest].to_a, @dist[dest]
   end
 
-  def forwarding_table(graph, src)
+  def forwarding_table(src)
 
-    @link = Hash.new {|h,k| h[k]=[]}
-    src_to_all_dest(graph, src)
+    link = Hash.new {|h,k| h[k]=[]}
+    src_to_all_dest( src)
 
     @path_to_all_dest.keys.each do |key|
       i = 1
       if key != src
         @path_to_all_dest[key].each do |value|
           if i <= 2
-            @link[key] <<  value
+            link[key] <<  value
             i += 1
           end
         end
@@ -149,7 +151,42 @@ class Graph
     end
 
 
-    @link
+    link
+  end
+
+  def dumptable graph, file
+    cost_map, ip_map, interfaces_map =  Utility.read_link_costs("./s1/weights.csv")
+
+    src_node = "n1"
+
+    table = forwarding_table(src_node)
+    file_contents = String.new
+
+    table.keys.each do |dest_node|
+      path, cost = src_to_dest( src_node, dest_node)
+
+      # Printing DUMPTABLE
+      next_hop_node = table[dest_node][1]
+      next_hop_ip = ip_map[src_node][next_hop_node]
+
+      for src_ip in interfaces_map[src_node]
+        for dest_ip in interfaces_map[dest_node]
+          file_contents << "#{src_ip} #{dest_ip} #{next_hop_ip} #{cost}\n"
+        end
+      end
+
+
+    end
+
+
+    Utility.write_string_to_file(file,file_contents)
   end
 
 end
+
+
+#link_
+link_state_table = {"n1"=>{"n2"=>1, "n3"=>1}, "n2"=>{"n1"=>1, "n3"=>1, "n4"=>1}, "n3"=>{"n1"=>1, "n2"=>1, "n4"=>1}, "n4"=>{"n2"=>1, "n3"=>1}}
+graph = Graph.new(link_state_table)
+puts graph
+puts graph.forwarding_table( "n1")

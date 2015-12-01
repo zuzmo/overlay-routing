@@ -51,11 +51,12 @@ Thread.new do
 		sleep($__update_interval)
 	}
 end
+sleep(2) # wait to initialize shared resources 
 
 #==========================================================
 # 3. Handle flood messages
 #==========================================================
-# Thread.new {LinkStateManager.handle_flooding}
+Thread.new {LinkStateManager.handle_flooding}
 
 #==========================================================
 # 4. Read commands from stdin
@@ -71,12 +72,12 @@ loop do
     when /^FORCEUPDATE/
     	LinkStateManager.broadcast_link_state
     when /^CHECKSTABLE/
-      #todo
-    when /^shutdown/
-      exit(1)
+    	LinkStateManager.check_stable?
+    when /^SHUTDOWN/
+    	exit(1)
     when /^debug/
       Debug.dump(server)
-    when /^send\s+(.+)\s+"(.+)"/
+    when /^SENDMSG\s+(.+)\s+"(.+)"/
       dst, msg = $1, $2
       SendMessageHandler.handle_from_console(dst, msg)
     else

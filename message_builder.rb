@@ -50,7 +50,8 @@ class MessageBuilder
 						 'TARGET' => target,
 						 'SEQUENCE' => @@ping_msg_seq,
 						 'ACK' => ack
-						}
+						},
+				'PAYLOAD' => 'test'
 		}.to_json
 
 	end

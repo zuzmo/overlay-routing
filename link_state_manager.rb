@@ -1,6 +1,7 @@
 require 'json'
 
 require_relative 'client'
+require_relative 'graph'
 require_relative 'logger'
 require_relative 'message_builder'
 require_relative 'utility'
@@ -166,7 +167,11 @@ class LinkStateManager
 
 			end
 
-			puts "link_state #{link_state_table}"
+			# puts "link_state #{link_state_table}"
+			# 1. Build graph by using linkstate table
+			graph = Graph.new(link_state_table)
+			# fwd_table = graph.forwarding_table("n1")
+			puts "#{graph}"
 			@@stable = 1
 		}
 	end

@@ -51,7 +51,7 @@ Thread.new do
 		sleep($__update_interval)
 	}
 end
-sleep(2)
+sleep(2) # wait to initialize shared resources 
 
 #==========================================================
 # 3. Handle flood messages
@@ -74,10 +74,10 @@ loop do
     when /^CHECKSTABLE/
     	LinkStateManager.check_stable?
     when /^SHUTDOWN/
-      exit(1)
+    	exit(1)
     when /^debug/
       Debug.dump(server)
-    when /^send\s+(.+)\s+"(.+)"/
+    when /^SENDMSG\s+(.+)\s+"(.+)"/
       dst, msg = $1, $2
       SendMessageHandler.handle_from_console(dst, msg)
     else

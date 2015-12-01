@@ -3,6 +3,7 @@ require 'json'
 require_relative 'fragmenter'
 require_relative 'message_builder'
 require_relative './client.rb'
+require_relative './graph.rb'
 
 
 class TracerouteMessageHandler
@@ -10,7 +11,6 @@ class TracerouteMessageHandler
 	
 
 	def self.handle(parsed_msg)
-		puts "check 1"
 		header = parsed_msg["HEADER"]
 		ack = header["ACK"]
 		dest = header["TARGET"]
@@ -29,11 +29,11 @@ class TracerouteMessageHandler
 				parsed_msg["HEADER"] = n_header
 				forward_message(parsed_msg,sender)
 			end
-		else
+		else   #below are the carrying nodes
 			if  ack == "true"
 				puts "check 4"
 				forward_message(parsed_msg,dest)
-			else
+			else #first round
 				puts "check 5"
 				n_header = modify_header(header)
 				parsed_msg["HEADER"] = n_header
@@ -48,17 +48,23 @@ class TracerouteMessageHandler
 		hop = header["HOP"].to_i + 1
 		header["HOP"] = hop
 		time_sent = Time.parse(header["TIME_SENT"])				
-		header["TRACEROUTE"]["#{$_node_name}"] = [Time.parse($_time_now) - time_sent,hop]
+		header["TRACEROUTE"]["#{$_node_name}"] = 
+			[Time.parse($_time_now) - time_sent,hop]
 		header
 	end
 
 	def self.forward_message(m,dest)
-		ip = $_linked_cost_map["#{$_node_name}"][dest]
+		graph = Graph.new($_linked_cost_map)
+		table = graph.forwarding_table($_node_name)
+		next_hop = table[dest][1]
+		ip = $_hostname_ip_map["#{$_node_name}"][next_hop]
 		Client.send(m.to_json, ip, 7000)
 	end
 
 	def self.print_table(header)
+		#graph = Graph.new();
 		puts header["TRACEROUTE"]
+	
 	end
 
 

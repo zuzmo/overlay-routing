@@ -1,8 +1,5 @@
 require_relative 'utility'
 
-# TODO:
-# 1. Sort the hash by keys of keys.
-#
 class Graph
 
   def initialize(link_state_table)
@@ -11,7 +8,7 @@ class Graph
     @visited = {}
     @prev = {}
     @path_to_all_dest = {}
-    @path_to_all_dest = {}
+    @path_to_dest = {}
     @dest_path = []
 
     create_graph(link_state_table)
@@ -54,7 +51,7 @@ class Graph
 
     cost_map.keys.each do |src|
       cost_map[src].each do |dest, cost|
-        if(cost != "Infinity")
+        if cost != "Infinity"
           add_edge(src, dest, cost)
         end
       end
@@ -76,10 +73,8 @@ class Graph
     vertex
   end
 
-  def dijkstra( src)
+  def dijkstra(src)
 
-
-    cost = 0
     for v in get_all_nodes
       @dist[v] = Float::INFINITY
       @visited[v] = false
@@ -92,8 +87,8 @@ class Graph
       u = min_distance
       @visited[u] = true
 
-      get_neighbors(u).each do |v, array|
-        alt = @dist[u] + get_cost(u, v)
+      get_neighbors(u).each do |v, cost|
+        alt = @dist[u] + cost
         if alt < @dist[v]
           @dist[v] = alt
           @prev[v] = u
@@ -104,7 +99,6 @@ class Graph
   end
 
   def print_path(dest, fin_dest)
-
 
     @dest_path = []
     if @prev[dest] != -1
@@ -120,7 +114,6 @@ class Graph
 
   def src_to_all_dest( src)
 
-
     get_all_nodes.each do |dest|
       src_to_dest( src, dest)
       @path_to_all_dest[dest] = @path_to_dest[dest]
@@ -131,7 +124,6 @@ class Graph
 
   def src_to_dest( src, dest)
 
-    @path_to_dest = {}
     dijkstra( src)
     print_path(dest, dest)
 
@@ -155,11 +147,10 @@ class Graph
       end
     end
 
-
     link
   end
 
-  def dumptable graph, file
+  def dumptable file
     cost_map, ip_map, interfaces_map =  Utility.read_link_costs("./s1/weights.csv")
 
     src_node = "n1"
@@ -180,17 +171,9 @@ class Graph
         end
       end
 
-
     end
-
 
     Utility.write_string_to_file(file,file_contents)
   end
 
 end
-
-
-link_state_table = {"n1"=>{"n2"=>1, "n3"=>1}, "n2"=>{"n1"=>1, "n3"=>1, "n4"=>1}, "n3"=>{"n1"=>1, "n2"=>1, "n4"=>1}, "n4"=>{"n2"=>1, "n3"=>1}}
-graph = Graph.new(link_state_table)
-puts graph
-puts graph.forwarding_table( "n1")

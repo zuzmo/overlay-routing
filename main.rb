@@ -124,11 +124,28 @@ require 'thread'
 	#        +file -> the destination file 
 	# =========================================================================
 	def dumptable(file)
-		#current_table = Forwarding_table.get_current_table
-		cc = "banana\n"
-		Utility.write_string_to_file(file,cc)
 
-		puts "wrote to #{file}"
+		Graph.new($_linked_cost_map)
+		table = forwarding_table( src_node)
+
+		file_contents = String.new
+
+		table.keys.each do |dest_node|
+			path, cost = src_to_dest( src_node, dest_node)
+
+			# Printing DUMPTABLE
+			next_hop_node = table[dest_node][1]
+			next_hop_ip = ip_map[src_node][next_hop_node]
+
+			for src_ip in interfaces_map[src_node]
+				for dest_ip in interfaces_map[dest_node]
+					file_contents << "#{src_ip} #{dest_ip} #{next_hop_ip} #{cost}\n"
+				end
+			end
+
+		end
+
+		Utility.write_string_to_file(file,file_contents)
 
 	end
 

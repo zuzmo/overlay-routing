@@ -6,12 +6,14 @@ require_relative 'utility'
 class Graph
 
   def initialize(link_state_table)
-    @adjacency_map = Hash.new
+    @adjacency_map = {}
     @dist = {}
     @visited = {}
     @prev = {}
     @path_to_all_dest = {}
-    @path_to_dest = {}
+    @path_to_all_dest = {}
+    @dest_path = []
+
     create_graph(link_state_table)
   end
 
@@ -53,7 +55,7 @@ class Graph
     cost_map.keys.each do |src|
       cost_map[src].each do |dest, cost|
         if(cost != "Infinity")
-          add_edge(src, dest, cost)
+          add_directed_edge(src, dest, cost)
         end
       end
     end
@@ -75,6 +77,7 @@ class Graph
   end
 
   def dijkstra( src)
+
 
     cost = 0
     for v in get_all_nodes
@@ -102,14 +105,15 @@ class Graph
 
   def print_path(dest, fin_dest)
 
-    dest_path = []
+
+    @dest_path = []
     if @prev[dest] != -1
       print_path(@prev[dest], fin_dest)
     end
-    dest_path.push(dest)
+    @dest_path.push(dest)
 
     if dest == fin_dest
-      @path_to_dest[fin_dest] = dest_path
+      @path_to_dest[fin_dest] = @dest_path
     end
 
   end
@@ -127,13 +131,14 @@ class Graph
 
   def src_to_dest( src, dest)
 
-    dijkstra(src)
+    @path_to_dest = {}
+    dijkstra( src)
     print_path(dest, dest)
 
     return @path_to_dest[dest].to_a, @dist[dest]
   end
 
-  def forwarding_table(src)
+  def forwarding_table( src)
 
     link = Hash.new {|h,k| h[k]=[]}
     src_to_all_dest( src)
@@ -159,7 +164,7 @@ class Graph
 
     src_node = "n1"
 
-    table = forwarding_table(src_node)
+    table = forwarding_table( src_node)
     file_contents = String.new
 
     table.keys.each do |dest_node|
@@ -185,7 +190,6 @@ class Graph
 end
 
 
-#link_
 link_state_table = {"n1"=>{"n2"=>1, "n3"=>1}, "n2"=>{"n1"=>1, "n3"=>1, "n4"=>1}, "n3"=>{"n1"=>1, "n2"=>1, "n4"=>1}, "n4"=>{"n2"=>1, "n3"=>1}}
 graph = Graph.new(link_state_table)
 puts graph

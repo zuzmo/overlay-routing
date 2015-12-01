@@ -53,7 +53,7 @@ class Graph
     cost_map.keys.each do |src|
       cost_map[src].each do |dest, cost|
         if(cost != "Infinity")
-          add_directed_edge(src, dest, cost)
+          add_edge(src, dest, cost)
         end
       end
     end
@@ -90,7 +90,6 @@ class Graph
       @visited[u] = true
 
       get_neighbors(u).each do |v, array|
-
         alt = @dist[u] + get_cost(u, v)
         if alt < @dist[v]
           @dist[v] = alt

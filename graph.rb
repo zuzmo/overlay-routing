@@ -7,6 +7,11 @@ class Graph
 
   def initialize(link_state_table)
     @adjacency_map = Hash.new
+    @dist = {}
+    @visited = {}
+    @prev = {}
+    @path_to_all_dest = {}
+    @path_to_dest = {}
     create_graph(link_state_table)
   end
 
@@ -70,9 +75,6 @@ class Graph
   end
 
   def dijkstra( src)
-    @dist = {}
-    @visited = {}
-    @prev = {}
 
     cost = 0
     for v in get_all_nodes
@@ -88,6 +90,7 @@ class Graph
       @visited[u] = true
 
       get_neighbors(u).each do |v, array|
+
         alt = @dist[u] + get_cost(u, v)
         if alt < @dist[v]
           @dist[v] = alt
@@ -100,21 +103,21 @@ class Graph
 
   def print_path(dest, fin_dest)
 
-    @dest_path = []
+    dest_path = []
     if @prev[dest] != -1
       print_path(@prev[dest], fin_dest)
     end
-    @dest_path.push(dest)
+    dest_path.push(dest)
 
     if dest == fin_dest
-      @path_to_dest[fin_dest] = @dest_path
+      @path_to_dest[fin_dest] = dest_path
     end
 
   end
 
   def src_to_all_dest( src)
 
-    @path_to_all_dest = {}
+
     get_all_nodes.each do |dest|
       src_to_dest( src, dest)
       @path_to_all_dest[dest] = @path_to_dest[dest]
@@ -125,7 +128,6 @@ class Graph
 
   def src_to_dest( src, dest)
 
-    @path_to_dest = {}
     dijkstra(src)
     print_path(dest, dest)
 

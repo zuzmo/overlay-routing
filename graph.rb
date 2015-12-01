@@ -55,7 +55,7 @@ class Graph
     cost_map.keys.each do |src|
       cost_map[src].each do |dest, cost|
         if(cost != "Infinity")
-          add_directed_edge(src, dest, cost)
+          add_edge(src, dest, cost)
         end
       end
     end

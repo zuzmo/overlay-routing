@@ -2,6 +2,7 @@ require 'json'
 require_relative 'hello_message_handler'
 require_relative 'flood_message_handler'
 require_relative 'send_message_handler'
+require_relative 'traceroute_message_handler'
 
 #==========================================================
 # Filter parses the recived messages and passes them to 
@@ -19,6 +20,8 @@ class MessageFilter
 			FloodMessageHandler.handle(parsed_msg)
 		elsif type == 'SENDMSG'
 			SendMessageHandler.handle(parsed_msg)
+		elsif type == 'TRACEROUTE'
+			TracerouteMessageHandler.handle(parsed_msg)
 		end
 	end
 

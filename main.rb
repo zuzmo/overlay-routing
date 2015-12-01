@@ -5,6 +5,8 @@ require_relative './clock.rb'
 require_relative './message_builder.rb'
 require_relative './server.rb'
 require_relative './logger'
+require_relative './message_builder.rb'
+require_relative './client.rb'
 require 'thread'
 
 @debug_mode = true 
@@ -30,8 +32,7 @@ require 'thread'
 	def start_server
 		dbg("entering start_server()")
 		begin 
-			@server = Server.new($node_name, 7000, @hostname_ip_map)
-			@server.run
+			@server = Thread.new {Server.run(@node_name, 7000)}
 		rescue Exception => e
 			dbg("error in start_server(). Failed to start server")
 		end
@@ -51,6 +52,7 @@ require 'thread'
 		 @update_interval = config_options["updateInterval"]
 		 @weights_file_name = config_options["weightFile"]
 		 @hostname_ip_map, @link_cost_map = Utility.read_link_costs("./#{@weights_file_name}")
+		 $_linked_cost_map = @link_cost_map
 		 dbg("done read_config_file()")
 	end
 
@@ -74,8 +76,15 @@ require 'thread'
 					#todo
 				when /^SHUTDOWN/
 					puts "attempting to shutdown"
-					server.shutdown
+					#@server.shutdown
 					exit(1)
+				when /^TRACEROUTE\s[\w\d\.]*/
+					dest = user_input.split(" ")[1]
+					m = MessageBuilder.create_traceroute_message(
+						@node_name,dest,443,@clock.get_time,false)
+					ip = @link_cost_map["#{@node_name}"][dest]
+					Client.send(m, ip, 7000)
+
 				else
 					puts "try again"
 				end
@@ -97,7 +106,8 @@ require 'thread'
 			loop do
 				sleep 1
 				@clock.tick(1)
-			dbg @clock.get_time
+				$_time_now = @clock.get_time
+		    	dbg @clock.get_time
 			end
 		}
 
@@ -136,6 +146,9 @@ if ARGV.length != 2
   exit(1)
 end
 
+$_linked_cost_map
+$_time_now
+$_node_name = ARGV[1]
 main   
 
 

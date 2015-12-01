@@ -69,13 +69,13 @@ class Graph
     vertex
   end
 
-  def dijkstra(graph, src)
+  def dijkstra( src)
     @dist = {}
     @visited = {}
     @prev = {}
 
     cost = 0
-    for v in graph.get_all_nodes
+    for v in get_all_nodes
       @dist[v] = Float::INFINITY
       @visited[v] = false
       @prev[v] = -1
@@ -83,12 +83,12 @@ class Graph
 
     @dist[src] = 0
 
-    graph.get_all_nodes.each do |vertex|
+    get_all_nodes.each do |vertex|
       u = min_distance
       @visited[u] = true
 
-      graph.get_neighbors(u).each do |v, array|
-        alt = @dist[u] + graph.get_cost(u, v)
+      get_neighbors(u).each do |v, array|
+        alt = @dist[u] + get_cost(u, v)
         if alt < @dist[v]
           @dist[v] = alt
           @prev[v] = u
@@ -112,30 +112,30 @@ class Graph
 
   end
 
-  def src_to_all_dest(graph, src)
+  def src_to_all_dest( src)
 
     @path_to_all_dest = {}
-    graph.get_all_nodes.each do |dest|
-      src_to_dest(graph, src, dest)
+    get_all_nodes.each do |dest|
+      src_to_dest( src, dest)
       @path_to_all_dest[dest] = @path_to_dest[dest]
     end
 
     @path_to_all_dest
   end
 
-  def src_to_dest(graph, src, dest)
+  def src_to_dest( src, dest)
 
     @path_to_dest = {}
-    dijkstra(graph, src)
+    dijkstra(src)
     print_path(dest, dest)
 
     return @path_to_dest[dest].to_a, @dist[dest]
   end
 
-  def forwarding_table(graph, src)
+  def forwarding_table(src)
 
     link = Hash.new {|h,k| h[k]=[]}
-    src_to_all_dest(graph, src)
+    src_to_all_dest( src)
 
     @path_to_all_dest.keys.each do |key|
       i = 1
@@ -158,11 +158,11 @@ class Graph
 
     src_node = "n1"
 
-    table = forwarding_table(graph, src_node)
+    table = forwarding_table(src_node)
     file_contents = String.new
 
     table.keys.each do |dest_node|
-      path, cost = src_to_dest(graph, src_node, dest_node)
+      path, cost = src_to_dest( src_node, dest_node)
 
       # Printing DUMPTABLE
       next_hop_node = table[dest_node][1]
@@ -184,3 +184,8 @@ class Graph
 end
 
 
+#link_
+link_state_table = {"n1"=>{"n2"=>1, "n3"=>1}, "n2"=>{"n1"=>1, "n3"=>1, "n4"=>1}, "n3"=>{"n1"=>1, "n2"=>1, "n4"=>1}, "n4"=>{"n2"=>1, "n3"=>1}}
+graph = Graph.new(link_state_table)
+puts graph
+puts graph.forwarding_table( "n1")

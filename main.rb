@@ -51,8 +51,9 @@ require 'thread'
 		 config_options = Utility.read_config(@config_file_name)
 		 @update_interval = config_options["updateInterval"]
 		 @weights_file_name = config_options["weightFile"]
-		 @hostname_ip_map, @link_cost_map = Utility.read_link_costs("./#{@weights_file_name}")
+		 @link_cost_map, @hostname_ip_map = Utility.read_link_costs("./#{@weights_file_name}")
 		 $_linked_cost_map = @link_cost_map
+		 $_hostname_ip_map = @hostname_ip_map
 		 dbg("done read_config_file()")
 	end
 
@@ -81,10 +82,12 @@ require 'thread'
 				when /^TRACEROUTE\s[\w\d\.]*/
 					dest = user_input.split(" ")[1]
 					m = MessageBuilder.create_traceroute_message(
-						@node_name,dest,443,@clock.get_time,false)
-					ip = @link_cost_map["#{@node_name}"][dest]
+					@node_name,dest,443,@clock.get_time,false)
+					graph = Graph.new($_linked_cost_map)
+					table = graph.forwarding_table($_node_name)
+					next_hop = table[dest][1]
+					ip = $_hostname_ip_map["#{$_node_name}"][next_hop]
 					Client.send(m, ip, 7000)
-
 				else
 					puts "try again"
 				end
@@ -147,6 +150,7 @@ if ARGV.length != 2
 end
 
 $_linked_cost_map
+$_hostname_ip_map
 $_time_now
 $_node_name = ARGV[1]
 main   

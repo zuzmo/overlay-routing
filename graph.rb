@@ -1,4 +1,3 @@
-
 require_relative 'utility'
 
 # TODO:
@@ -6,8 +5,9 @@ require_relative 'utility'
 #
 class Graph
 
-  def initialize
+  def initialize(link_state_table)
     @adjacency_map = Hash.new
+    create_graph(link_state_table)
   end
 
   # Adds two directed edges to appear as a non-directed edge
@@ -42,12 +42,14 @@ class Graph
     @adjacency_map.to_s
   end
 
-  def create_graph
-    cost_map, ip_map =  Utility.read_link_costs("./s1/weights.csv")
+  # Creates the graph from the weights file.
+  def create_graph(cost_map)
 
     cost_map.keys.each do |src|
       cost_map[src].each do |dest, cost|
-        add_directed_edge(src, dest, cost)
+        if(cost != "Infinity")
+          add_directed_edge(src, dest, cost)
+        end
       end
     end
   end
@@ -118,7 +120,7 @@ class Graph
       @path_to_all_dest[dest] = @path_to_dest[dest]
     end
 
-     @path_to_all_dest
+    @path_to_all_dest
   end
 
   def src_to_dest(graph, src, dest)
@@ -127,13 +129,12 @@ class Graph
     dijkstra(graph, src)
     print_path(dest, dest)
 
-
-    return @path_to_dest[dest].inspect, @dist[dest]
+    return @path_to_dest[dest].to_a, @dist[dest]
   end
 
   def forwarding_table(graph, src)
 
-    @link = Hash.new {|h,k| h[k]=[]}
+    link = Hash.new {|h,k| h[k]=[]}
     src_to_all_dest(graph, src)
 
     @path_to_all_dest.keys.each do |key|
@@ -141,7 +142,7 @@ class Graph
       if key != src
         @path_to_all_dest[key].each do |value|
           if i <= 2
-            @link[key] <<  value
+            link[key] <<  value
             i += 1
           end
         end
@@ -149,7 +150,37 @@ class Graph
     end
 
 
-    @link
+    link
+  end
+
+  def dumptable graph, file
+    cost_map, ip_map, interfaces_map =  Utility.read_link_costs("./s1/weights.csv")
+
+    src_node = "n1"
+
+    table = forwarding_table(graph, src_node)
+    file_contents = String.new
+
+    table.keys.each do |dest_node|
+      path, cost = src_to_dest(graph, src_node, dest_node)
+
+      # Printing DUMPTABLE
+      next_hop_node = table[dest_node][1]
+      next_hop_ip = ip_map[src_node][next_hop_node]
+
+      for src_ip in interfaces_map[src_node]
+        for dest_ip in interfaces_map[dest_node]
+          file_contents << "#{src_ip} #{dest_ip} #{next_hop_ip} #{cost}\n"
+        end
+      end
+
+
+    end
+
+
+    Utility.write_string_to_file(file,file_contents)
   end
 
 end
+
+

@@ -4,22 +4,22 @@ require_relative 'client'
 require_relative 'graph'
 require_relative 'logger'
 require_relative 'message_builder'
+require_relative 'router'
 require_relative 'utility'
 
 
 class LinkStateManager
 
 	INFINITY = 'Infinity'
-	@@neighbors_ip_map = nil
-	@@stable = 1
+	@@ip_map = nil # needs a lock
 
 	def self.broadcast_link_state
-		@@stable = 0
 		#---------------------------------------------------
         # read costs file
         #---------------------------------------------------
-        cost_map, ip_map, _ = Utility.read_link_costs($__weight_file)
-        @@neighbors_ip_map = ip_map[$__node_name]
+        cost_map, @@ip_map, _ = Utility.read_link_costs($__weight_file)
+        # puts cost_map
+        @@neighbors_ip_map = @@ip_map[$__node_name]
 
         neighbors_cost_map = cost_map[$__node_name]
         
@@ -49,7 +49,6 @@ class LinkStateManager
         rescue Exception => e
             Logger.error("#{e} local")
         end
-        @@stable = 1
 	end
 
 
@@ -59,7 +58,7 @@ class LinkStateManager
 		link_state_table = {}
 		loop {
 			parsed_flood_msg = @@parsed_flood_mgs.pop	# block waiting for flood message
-			@@stable = 0
+
 			src = parsed_flood_msg['HEADER']['SENDER']
 			seq = parsed_flood_msg['HEADER']['SEQUENCE']
 			fwd = parsed_flood_msg['HEADER']['FORWARDER']
@@ -80,15 +79,15 @@ class LinkStateManager
 						else
 							link_state_table[src] = { dst => cost }
 						end
-						# if cost == INFINITY
-						# 	link_state_table.delete(dst) # not sure if this is needed
-						# end
+						if cost == INFINITY
+							link_state_table.delete(dst) # not sure if this is needed
+						end
 					end
 					# and forward
 					parsed_flood_msg['HEADER']['FORWARDER'] = $__node_name
 					parsed_flood_msg['HEADER']['AGE'] = age + 1
 					@@neighbors_ip_map.each do |neighbor, ip|
-						if fwd != neighbor
+						if fwd != neighbor and src != neighbor
 							ip = @@neighbors_ip_map[neighbor]
 							port = $__node_ports[neighbor]
 							begin
@@ -113,15 +112,15 @@ class LinkStateManager
 							else
 								link_state_table[src] = { dst => cost }
 							end
-							# if cost == INFINITY
-							# 	link_state_table.delete(dst) # not sure if this is needed
-							# end
+							if cost == INFINITY
+								link_state_table.delete(dst) # not sure if this is needed
+							end
 						end
 						# and forward
 						parsed_flood_msg['HEADER']['FORWARDER'] = $__node_name
 						parsed_flood_msg['HEADER']['AGE'] = age
 						@@neighbors_ip_map.each do |neighbor, ip|
-							if fwd != neighbor
+							if fwd != neighbor and src != neighbor
 								ip = @@neighbors_ip_map[neighbor]
 								port = $__node_ports[neighbor]
 								begin
@@ -146,15 +145,15 @@ class LinkStateManager
 					else
 						link_state_table[src] = { dst => cost }
 					end
-					# if cost == INFINITY
-					# 	link_state_table.delete(dst) # not sure if this is needed
-					# end
+					if cost == INFINITY
+						link_state_table.delete(dst) # not sure if this is needed
+					end
 				end
 				# and forward
 				parsed_flood_msg['HEADER']['FORWARDER'] = $__node_name
 				parsed_flood_msg['HEADER']['AGE'] = age + 1
 				@@neighbors_ip_map.each do |neighbor, ip|
-					if fwd != neighbor
+					if fwd != neighbor and src != neighbor
 						ip = @@neighbors_ip_map[neighbor]
 						port = $__node_ports[neighbor]
 						begin
@@ -167,12 +166,16 @@ class LinkStateManager
 
 			end
 
-			# puts "link_state #{link_state_table} "
-			# 1. Build graph by using linkstate table
-			graph = Graph.new(link_state_table)
-			fwd_table = graph.forwarding_table($__node_name)
-			puts "#{fwd_table}"
-			@@stable = 1
+			
+			# build graph by using linkstate table
+			if @@parsed_flood_mgs.empty? 
+				# puts "link_state #{link_state_table} "
+				graph = Graph.new(link_state_table)
+				fwd_table = graph.forwarding_table($__node_name)
+				Router.update(fwd_table)
+				# puts "#{fwd_table}"
+			end
+			
 		}
 	end
 
@@ -181,10 +184,14 @@ class LinkStateManager
 	end
 
 	def self.check_stable?
-		stble = 'yes'
-		if @@stable == 0
-			stble = 'no'
+		if @@parsed_flood_mgs.empty?
+			puts 'yes'
+		else
+			puts 'no'
 		end
-		puts "#{stble}"
+	end
+
+	def self.get_ip(src, dst)
+		@@ip_map[src][dst]
 	end
 end

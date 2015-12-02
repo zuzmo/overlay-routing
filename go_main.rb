@@ -77,7 +77,7 @@ loop do
     	exit(1)
     when /^debug/
       Debug.dump(server)
-    when /^SENDMSG\s+(.+)\s+"(.+)"/
+    when /^SNDMSG\s+(.+)\s+"(.+)"/
       dst, msg = $1, $2
       SendMessageHandler.handle_from_console(dst, msg)
     else

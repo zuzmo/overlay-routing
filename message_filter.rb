@@ -18,8 +18,8 @@ class MessageFilter
 			HelloMessageHandler.handle(parsed_msg)
 		elsif 	type 	== 'FLOOD'
 			FloodMessageHandler.handle(parsed_msg)
-		elsif 	type 	== 'SENDMSG'
-			SendMessageHandler.handle(parsed_msg)
+		elsif 	type 	== 'SNDMSG'
+			SendMessageHandler.handle_received(parsed_msg)
 		elsif type == 'TRACEROUTE'
 			TracerouteMessageHandler.handle(parsed_msg)
 		end

@@ -5,18 +5,24 @@ class SendMessageHandler
 
 	def self.handle_from_console(dst, payload)
 		if dst == $__node_name
-			puts "#{msg}"
+			puts "#{payload}"
 		else
 			# fragment message into packets
 			msg = MessageBuilder.create_send_message($__node_name, dst, payload)
-			packets_arr = Fragmenter.fragment(msg)
-			# TODO: forward packets
-			# puts packets_arr
-
+			forward(JSON.parse(msg))
 		end
 	end
 
-	def self.handle(parsed_msg)
+	def self.handle_received(parsed_msg)
+		if parsed_msg['HEADER']['TARGET'] == $__node_name
+			puts "#{parsed_msg['PAYLOAD']}"
+		else
+			forward(parsed_msg)
+		end
+	end
+
+	def self.forward(parsed_msg)
+		Router.forward(parsed_msg)
 	end
 
 end

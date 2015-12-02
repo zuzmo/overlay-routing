@@ -1,4 +1,5 @@
 require 'json'
+require 'thread'
 
 require_relative 'client'
 require_relative 'graph'
@@ -12,12 +13,16 @@ class LinkStateManager
 
 	INFINITY = 'Infinity'
 	@@ip_map = nil # needs a lock
+	@@graph = nil
+	@@graph_lock = Mutex.new
+	@@ip_map = nil
+	@@interface_map = nil
 
 	def self.broadcast_link_state
 		#---------------------------------------------------
         # read costs file
         #---------------------------------------------------
-        cost_map, @@ip_map, _ = Utility.read_link_costs($__weight_file)
+        cost_map, @@ip_map, @@interface_map = Utility.read_link_costs($__weight_file)
         # puts cost_map
         @@neighbors_ip_map = @@ip_map[$__node_name]
 
@@ -170,9 +175,11 @@ class LinkStateManager
 			# build graph by using linkstate table
 			if @@parsed_flood_mgs.empty? 
 				# puts "link_state #{link_state_table} "
-				graph = Graph.new(link_state_table)
-				fwd_table = graph.forwarding_table($__node_name)
-				Router.update(fwd_table)
+				@@graph_lock.synchronize {
+					@@graph = Graph.new(link_state_table)
+					fwd_table = @@graph.forwarding_table($__node_name)
+					Router.update(fwd_table)
+				}
 				# puts "#{fwd_table}"
 			end
 			
@@ -184,14 +191,30 @@ class LinkStateManager
 	end
 
 	def self.check_stable?
-		if @@parsed_flood_mgs.empty?
-			puts 'yes'
-		else
-			puts 'no'
-		end
+		@@parsed_flood_mgs.empty?
 	end
 
 	def self.get_ip(src, dst)
 		@@ip_map[src][dst]
+	end
+
+	def self.get_table_data
+		table = @@graph.forwarding_table($__node_name)
+
+		data = ''
+		table.keys.each do |dest_node|
+			path, cost = @@graph.src_to_dest($__node_name, dest_node)
+			# Printing DUMPTABLE
+			next_hop_node = table[dest_node][1]
+			next_hop_ip = @@ip_map[$__node_name][next_hop_node]
+
+			for src_ip in @@interface_map[$__node_name]
+				for dest_ip in @@interface_map[dest_node]
+					data << "#{src_ip},#{dest_ip},#{next_hop_ip},#{cost}\n"
+				end
+			end
+		end
+
+		data
 	end
 end

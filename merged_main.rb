@@ -2,6 +2,7 @@ require 'socket'
 
 require_relative 'debug'
 require_relative 'clock'
+require_relative 'hooks'
 require_relative 'link_state_manager'
 require_relative 'logger'
 require_relative 'send_message_handler'
@@ -79,16 +80,16 @@ loop do
     user_input = STDIN.gets.chomp
     
     case user_input
-    when /^DUMPTABLE\s[\w\d\.]*/
-    	# GONZALO
-      # file_name = user_input.split(" ")[1]
-      #todo
+    when /^DUMPTABLE\s(.+)/
+    	# Gonzalo
+    	fname = $1
+    	Hooks.dumptable(fname)
     when /^FORCEUPDATE/
     	# Gonzalo
-    	LinkStateManager.broadcast_link_state
+    	Hooks.force_update
     when /^CHECKSTABLE/
     	# Gonzalo
-    	LinkStateManager.check_stable?
+    	Hooks.check_stable
     when /^SHUTDOWN/
     	# George
     	exit(1)

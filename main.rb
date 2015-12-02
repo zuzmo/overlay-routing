@@ -5,6 +5,7 @@ require_relative 'clock'
 require_relative 'link_state_manager'
 require_relative 'logger'
 require_relative 'send_message_handler'
+require_relative 'clocksync_message_handler'
 require_relative 'server'
 require_relative 'utility'
 
@@ -110,7 +111,7 @@ loop do
 	when /^ADVERTISE/
 		# ALL
 	when /^CLOCKSYNC/
-		# George
+		ClocksyncMessageHandler.handle_from_console
     else
       puts "try again"
     end

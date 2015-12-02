@@ -8,7 +8,6 @@ require_relative './graph.rb'
 
 class TracerouteMessageHandler	
 
-
 	def self.handle_from_console(dest)
 		if dest == $__node_name
 			puts "0 #{$__node_name} 0.0"
@@ -67,12 +66,19 @@ class TracerouteMessageHandler
 	end
 
 	def self.print_table(header)
-		info = header["TRACEROUTE"]
-		
+
+		info = header["TRACEROUTE"]		
+
 		info.sort_by{|k,v|v["HOP"]}.each do |node,val|
 			hop = val["HOP"]
-			time = val["TIME"]
-			puts "#{hop} #{node} #{time}"
+			time_arrived = val["TIME"]
+
+			if time_arrived > $__ping_timeout
+				puts "TIMEOUT ON #{hop}"
+			else
+				puts "#{hop} #{node} #{time_arrived}"
+			end
+
 		end
 	end
 

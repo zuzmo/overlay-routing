@@ -8,6 +8,17 @@ require_relative './graph.rb'
 
 class TracerouteMessageHandler	
 
+
+	def self.handle_from_console(dest)
+		if dest == $__node_name
+			puts "0 #{$__node_name} 0.0"
+		else
+			m = MessageBuilder.create_traceroute_message(
+				$__node_name,dest,$_time_now,false)
+			forward_message(JSON.parse(m))
+		end
+	end
+
 	def self.handle(parsed_msg)
 		header = parsed_msg["HEADER"]
 		ack = header["ACK"]
@@ -23,15 +34,15 @@ class TracerouteMessageHandler
 				n_header["SENDER"] = "#{$__node_name}"
 				n_header["TARGET"] = sender
 				parsed_msg["HEADER"] = n_header
-				forward_message(parsed_msg,sender)
+				forward_message(parsed_msg)
 			end
 		else   #below are the carrying nodes
 			if  ack == "true"
-				forward_message(parsed_msg,dest)
+				forward_message(parsed_msg)
 			else #first round
 				n_header = modify_header(header)
 				parsed_msg["HEADER"] = n_header
-				forward_message(parsed_msg,dest)
+				forward_message(parsed_msg)
 			end
 		end
 
@@ -51,7 +62,7 @@ class TracerouteMessageHandler
 		header
 	end
 
-	def self.forward_message(m,dest)
+	def self.forward_message(m)
 		Router.forward(m)
 	end
 

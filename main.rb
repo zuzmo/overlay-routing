@@ -91,6 +91,7 @@ loop do
     	LinkStateManager.check_stable?
     when /^SHUTDOWN/
     	# George
+    	STDOUT.flush
     	exit(1)
     when /^SNDMSG\s+(.+)\s+"(.+)"/
     	# Gonzalo

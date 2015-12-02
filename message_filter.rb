@@ -23,6 +23,8 @@ class MessageFilter
 			SendMessageHandler.handle_received(parsed_msg)
 		elsif 	type 	== 'TRACEROUTE'
 			TracerouteMessageHandler.handle(parsed_msg)
+		elsif  type 	== 'CLOCKSYNC'
+			ClocksyncMessageHandler.handle(parsed_msg)
 		end
 	end
 

@@ -1,176 +1,122 @@
+require 'socket'
 
+require_relative 'debug'
+require_relative 'clock'
+require_relative 'link_state_manager'
+require_relative 'logger'
+require_relative 'send_message_handler'
+require_relative 'server'
+require_relative 'utility'
 
-require_relative './utility.rb'
-require_relative './clock.rb'
-require_relative './message_builder.rb'
-require_relative './server.rb'
-require_relative './logger'
-require_relative './message_builder.rb'
-require_relative './client.rb'
-require 'thread'
-
-@debug_mode = true 
-
-
-	# =========================================================================
-	# Starts the program.
-	# =========================================================================
-	def main
-
- 		 dbg("entering main()")
-		 @config_file_name = ARGV[0]
-		 @node_name = ARGV[1]
-		 Logger.init(@node_name)
-		 start_heartbeat()    
-		 read_config_file()
-	     start_server()
-	     listen_for_hook()
-	     dbg("done main()")
-	end
-
-
-	def start_server
-		dbg("entering start_server()")
-		begin 
-			@server = Thread.new {Server.run(@node_name, 7000)}
-		rescue Exception => e
-			dbg("error in start_server(). Failed to start server")
-		end
-		dbg("exiting start_server()")
-	end
-
-
-
-
-
-	# =========================================================================
-	# Reads the config file and sets up constants.
-	# =========================================================================	
-	def read_config_file
-		 dbg("entering read_config_file()")
-		 config_options = Utility.read_config(@config_file_name)
-		 @update_interval = config_options["updateInterval"]
-		 @weights_file_name = config_options["weightFile"]
-		 @link_cost_map, @hostname_ip_map, @interfaces_map = Utility.read_link_costs("./#{@weights_file_name}")
-		 $_linked_cost_map = @link_cost_map
-		 $_hostname_ip_map = @hostname_ip_map
-		 $_interface_map = @interfaces_map
-		 dbg("done read_config_file()")
-	end
-
-
-
-	# =========================================================================
-	# Listens and interprets commands given to stdin.
-	# =========================================================================
-	def listen_for_hook
-		dbg("entering listen_for_hook()")
-
-			loop do	
-				user_input = STDIN.gets.chomp                               #blocks while waiting for user input
-				case user_input
-				when /^DUMPTABLE\s[\w\d\.]*/
-					file_name = user_input.split(" ")[1]
-					dumptable(file_name)
-				when /^FORCEUPDATE$/
-					#todo
-				when /^CHECKSTABLE$/
-					#todo
-				when /^SHUTDOWN/
-					puts "attempting to shutdown"
-					#@server.shutdown
-					exit(1)
-				when /^TRACEROUTE\s[\w\d\.]*/
-					dest = user_input.split(" ")[1]
-					m = MessageBuilder.create_traceroute_message(
-					@node_name,dest,443,@clock.get_time,false)
-					graph = Graph.new($_linked_cost_map)
-					table = graph.forwarding_table($_node_name)
-					next_hop = table[dest][1]
-					ip = $_hostname_ip_map["#{$_node_name}"][next_hop]
-					Client.send(m, ip, 7000)
-				else
-					puts "try again"
-				end
-			end
-		
-		dbg("exiting listen_for_hook()")
-	end
-
-
-	# =========================================================================
-	# Keeps the main thread from dying. Updates the clock.
-	# =========================================================================
-	def start_heartbeat
-
-		dbg("entering start_heartbeat")
-
-		@heartbeat_pid = Thread.new{
-			@clock = Clock.new
-			loop do
-				sleep 1
-				@clock.tick(1)
-				$_time_now = @clock.get_time
-		    	dbg @clock.get_time
-			end
-		}
-
-	end
-
-
-    # =========================================================================
-	# Retreives the current forwarding table from the forwarding table object 
-	# and writes it to a file.
-	# Params:
-	#        +file -> the destination file
-	# =========================================================================
-	def dumptable(file)
-
-		graph = Graph.new($_linked_cost_map)
-		table = graph.forwarding_table($_node_name)
-
-		file_contents = String.new
-
-		table.keys.each do |dest_node|
-			path, cost = graph.src_to_dest( $_node_name, dest_node)
-
-			# Printing DUMPTABLE
-			next_hop_node = table[dest_node][1]
-			next_hop_ip = $_hostname_ip_map[$_node_name][next_hop_node]
-
-			for src_ip in $_interface_map[$_node_name]
-				for dest_ip in $_interface_map[dest_node]
-					file_contents << "#{src_ip} #{dest_ip} #{next_hop_ip} #{cost}\n"
-				end
-			end
-
-		end
-
-		Utility.write_string_to_file(file,file_contents)
-
-	end
-
-	# =========================================================================
-	# Writes messages to stdout if the debug_mode constant is set to true.
-	# Params:
-	#        +message -> the message to print to console
-	# =========================================================================
-	def dbg(message)
-		if @debug_mode == true
-			puts message
-		end
-	end
-
+#==========================================================
+# 0. Read args from stdin
+#==========================================================
 if ARGV.length != 2
   puts "Invalid number of arguments."
   puts "Usage: ruby main.rb config <node_name>"
   exit(1)
 end
 
-$_linked_cost_map
-$_hostname_ip_map
+config_file		= ARGV[0]
+$__node_name 	= ARGV[1]
+
+Thread.abort_on_exception = true;
+
+#==========================================================
+# 1. Read config files (config, weights.csv, and nodes.txt)
+# and build neighbors map
+#==========================================================
+config_options 		= Utility.read_config(config_file)
+
+$__update_interval 	= config_options['updateInterval'].to_i
+$__weight_file 		= config_options['weightFile']
+$__nodes_file		= config_options['nodes']
+$__max_packet_size 	= config_options['maxPacketSize'].to_i
+$__ping_timeout		= config_options['pingTimeout']
+$__node_ports		= Utility.read_ports($__nodes_file)
+
+#==========================================================
+# 2. Run server to accept connections
+#==========================================================
+$__port = $__node_ports[$__node_name]
+Thread.new {Server.run($__node_name, $__port)}
+
+#==========================================================
+# 2. Broadcast link state every updateInterval seconds
+#==========================================================
+Thread.new do
+	sleep(1) # wait for other servers to start up
+	loop {
+		LinkStateManager.broadcast_link_state
+		sleep($__update_interval)
+	}
+end
+sleep(2) # wait to initialize shared resources 
+
+#==========================================================
+# 3. Handle flood messages
+#==========================================================
+Thread.new {LinkStateManager.handle_flooding}
+
+#==========================================================
+# 4. Start thread that updates clock
+#==========================================================
 $_time_now
-$_node_name = ARGV[1]
-main   
+Thread.new{
+	@clock = Clock.new
+	loop do
+		sleep 1
+		@clock.tick(1)
+		$_time_now = @clock.get_time
+	end
+}
+
+#==========================================================
+# 5. Read commands from stdin
+#==========================================================
+loop do 
+
+    user_input = STDIN.gets.chomp
+    
+    case user_input
+    when /^DUMPTABLE\s[\w\d\.]*/
+    	# GONZALO
+      # file_name = user_input.split(" ")[1]
+      #todo
+    when /^FORCEUPDATE/
+    	# Gonzalo
+    	LinkStateManager.broadcast_link_state
+    when /^CHECKSTABLE/
+    	# Gonzalo
+    	LinkStateManager.check_stable?
+    when /^SHUTDOWN/
+    	# George
+    	STDOUT.flush
+    	exit(1)
+    when /^SNDMSG\s+(.+)\s+"(.+)"/
+    	# Gonzalo
+	    dst, msg = $1, $2
+	    SendMessageHandler.handle_from_console(dst, msg)
+  	when /^TRACEROUTE\s[\w\d\.]*/
+  		# George
+		dest = user_input.split(" ")[1]
+		TracerouteMessageHandler.handle_from_console(dest)
+	when /^PING\s[\w\d\.]*/
+		# Ivy
+	when /^FTP/
+		# Gonzalo
+	when /^POST/
+		# ALL
+	when /^ADVERTISE/
+		# ALL
+	when /^CLOCKSYNC/
+		# George
+    else
+      puts "try again"
+    end
+end
+
+
+
 
 

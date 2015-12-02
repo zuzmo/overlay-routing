@@ -65,7 +65,7 @@ class MessageBuilder
 						 "SEQUENCE" => "#{sequence}",
 						 "TIME_SENT" => "#{time_sent}",
 						 "HOP" => 0,
-						 "TRACEROUTE" => {"#{sender}" => "[0.0,0]"},
+						 "TRACEROUTE" => {"#{sender}" => {"TIME" => "0.0","HOP" => "0"}},
 						 "ACK" => "#{ack}"
 						},
 				"PAYLOAD" => "test"

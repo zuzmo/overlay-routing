@@ -18,10 +18,8 @@ class TracerouteMessageHandler
 
 		if dest == $_node_name
 			if ack == "true"
-				puts "check 2"
 				print_table(header)
 			else					
-				puts "check 3"	
 				n_header = modify_header(header)
 				n_header["ACK"] = "true"
 				n_header["SENDER"] = "#{$_node_name}"
@@ -31,10 +29,8 @@ class TracerouteMessageHandler
 			end
 		else   #below are the carrying nodes
 			if  ack == "true"
-				puts "check 4"
 				forward_message(parsed_msg,dest)
 			else #first round
-				puts "check 5"
 				n_header = modify_header(header)
 				parsed_msg["HEADER"] = n_header
 				forward_message(parsed_msg,dest)
@@ -49,7 +45,7 @@ class TracerouteMessageHandler
 		header["HOP"] = hop
 		time_sent = Time.parse(header["TIME_SENT"])				
 		header["TRACEROUTE"]["#{$_node_name}"] = 
-			[Time.parse($_time_now) - time_sent,hop]
+			{"TIME" => "#{Time.parse($_time_now) - time_sent}", "HOP" => "#{hop}"}
 		header
 	end
 
@@ -62,9 +58,13 @@ class TracerouteMessageHandler
 	end
 
 	def self.print_table(header)
-		#graph = Graph.new();
-		puts header["TRACEROUTE"]
-	
+		info = header["TRACEROUTE"]
+		
+		info.sort_by{|k,v|v["HOP"]}.each do |node,val|
+			hop = val["HOP"]
+			time = val["TIME"]
+			puts "#{hop} #{node} #{time}"
+		end
 	end
 
 

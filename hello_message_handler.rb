@@ -1,6 +1,6 @@
 class HelloMessageHandler
 
-	def self.handle(parsed_msg)
+	def self.handle_received(parsed_msg)
 		# do nothing
 	end
 

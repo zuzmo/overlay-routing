@@ -1,5 +1,4 @@
 require 'socket'
-require 'json'
 
 class Client
 
@@ -10,7 +9,7 @@ class Client
     socket.close
   end
 
-   def self.send_local(msg, port)
+  def self.send_local(msg, port)
     socket = TCPSocket.open('0.0.0.0', port)
     packets = Fragmenter.fragment(msg)
     packets.each{ |p| socket.puts(p) }

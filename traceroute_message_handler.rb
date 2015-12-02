@@ -16,13 +16,13 @@ class TracerouteMessageHandler
 		dest = header["TARGET"]
 		sender = header["SENDER"]
 
-		if dest == $_node_name
+		if dest == $__node_name
 			if ack == "true"
 				print_table(header)
 			else					
 				n_header = modify_header(header)
 				n_header["ACK"] = "true"
-				n_header["SENDER"] = "#{$_node_name}"
+				n_header["SENDER"] = "#{$__node_name}"
 				n_header["TARGET"] = sender
 				parsed_msg["HEADER"] = n_header
 				forward_message(parsed_msg,sender)
@@ -44,17 +44,18 @@ class TracerouteMessageHandler
 		hop = header["HOP"].to_i + 1
 		header["HOP"] = hop
 		time_sent = Time.parse(header["TIME_SENT"])				
-		header["TRACEROUTE"]["#{$_node_name}"] = 
+		header["TRACEROUTE"]["#{$__node_name}"] = 
 			{"TIME" => "#{Time.parse($_time_now) - time_sent}", "HOP" => "#{hop}"}
 		header
 	end
 
 	def self.forward_message(m,dest)
-		graph = Graph.new($_linked_cost_map)
-		table = graph.forwarding_table($_node_name)
-		next_hop = table[dest][1]
-		ip = $_hostname_ip_map["#{$_node_name}"][next_hop]
-		Client.send(m.to_json, ip, 7000)
+		# graph = Graph.new($_linked_cost_map)
+		# table = graph.forwarding_table($_node_name)
+		# next_hop = table[dest][1]
+		# ip = $_hostname_ip_map["#{$_node_name}"][next_hop]
+		# Client.send(m.to_json, ip, 7000)
+		Router.forward(m)
 	end
 
 	def self.print_table(header)

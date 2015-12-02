@@ -1,8 +1,7 @@
 require 'json'
 
 #==========================================================
-# Fragmenter converts a message into packets depending on 
-# the maxPacketSize option in the config file.
+# Defragmenter assembles packets into one message.
 #==========================================================
 
 class Defragmenter

@@ -133,9 +133,4 @@ class Utility
 		str.length
 	end
 
-	# Returns an array of chunks
-	def self.chunkify(str, chunk_size)
-		str.scan(/.{1,#{chunk_size}}/)
-	end
-
 end

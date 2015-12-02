@@ -1,3 +1,5 @@
+require 'json'
+
 require_relative 'fragmenter'
 require_relative 'message_builder'
 
@@ -7,7 +9,6 @@ class SendMessageHandler
 		if dst == $__node_name
 			puts "#{payload}"
 		else
-			# fragment message into packets
 			msg = MessageBuilder.create_send_message($__node_name, dst, payload)
 			forward(JSON.parse(msg))
 		end

@@ -1,12 +1,13 @@
 require 'json'
+
 require_relative 'hello_message_handler'
 require_relative 'flood_message_handler'
 require_relative 'send_message_handler'
 require_relative 'traceroute_message_handler'
 
 #==========================================================
-# Filter parses the recived messages and passes them to 
-# their message handler
+# Filter parses the received messages and passes them to 
+# their message handlers
 #==========================================================
 class MessageFilter
 
@@ -15,12 +16,12 @@ class MessageFilter
 		type = parsed_msg['HEADER']['TYPE']
 		
 		if 		type 	== 'HELLO'
-			HelloMessageHandler.handle(parsed_msg)
+			HelloMessageHandler.handle_received(parsed_msg)
 		elsif 	type 	== 'FLOOD'
-			FloodMessageHandler.handle(parsed_msg)
+			FloodMessageHandler.handle_received(parsed_msg)
 		elsif 	type 	== 'SNDMSG'
 			SendMessageHandler.handle_received(parsed_msg)
-		elsif type == 'TRACEROUTE'
+		elsif 	type 	== 'TRACEROUTE'
 			TracerouteMessageHandler.handle(parsed_msg)
 		end
 	end

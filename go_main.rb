@@ -1,6 +1,7 @@
 require 'socket'
 
 require_relative 'debug'
+require_relative 'clock'
 require_relative 'link_state_manager'
 require_relative 'logger'
 require_relative 'send_message_handler'
@@ -61,6 +62,23 @@ Thread.new {LinkStateManager.handle_flooding}
 #==========================================================
 # 4. Read commands from stdin
 #==========================================================
+$_time_now
+def start_heartbeat
+
+		# dbg("entering start_heartbeat")
+
+		@heartbeat_pid = Thread.new{
+			@clock = Clock.new
+			loop do
+				sleep 1
+				@clock.tick(1)
+				$_time_now = @clock.get_time
+		    	# dbg @clock.get_time
+			end
+		}
+
+end
+start_heartbeat
 loop do 
 
     user_input = STDIN.gets.chomp
@@ -80,6 +98,16 @@ loop do
     when /^SNDMSG\s+(.+)\s+"(.+)"/
       dst, msg = $1, $2
       SendMessageHandler.handle_from_console(dst, msg)
+  	when /^TRACEROUTE\s[\w\d\.]*/
+				dest = user_input.split(" ")[1]
+				m = MessageBuilder.create_traceroute_message(
+				$__node_name,dest,443,$_time_now,false)
+				# graph = Graph.new($_linked_cost_map)
+				# table = graph.forwarding_table($_node_name)
+				# next_hop = table[dest][1]
+				# ip = $_hostname_ip_map["#{$_node_name}"][next_hop]
+				# Client.send(m, ip, 7000)
+				Router.forward(JSON.parse(m))
     else
       puts "try again"
     end

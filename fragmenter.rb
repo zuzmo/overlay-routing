@@ -4,7 +4,7 @@ require_relative 'utility'
 
 #==========================================================
 # Fragmenter converts a message into packets depending on 
-# the maxPacketSize option in the config file.
+# the maxPacketSize (payload) option in the config file.
 #==========================================================
 
 class Fragmenter

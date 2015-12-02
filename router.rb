@@ -9,13 +9,11 @@ class Router
 
 	def self.forward(parsed_msg)
 		@@semaphore.synchronize {
-			# puts "#{@@fwd_table}"
-			# puts "parsed_msg: #{parsed_msg}"
-			puts parsed_msg.class
+			
 			dst = parsed_msg['HEADER']['TARGET']
 			src, next_hop = @@fwd_table[dst]
 
-			puts "src: #{src}, next_hop: #{next_hop}"
+			# puts "src: #{src}, next_hop: #{next_hop}"
 
 			next_hop_ip = LinkStateManager.get_ip(src, next_hop)
 			next_hop_port = $__node_ports[next_hop]
@@ -25,7 +23,7 @@ class Router
 				Client.send(msg, next_hop_ip, next_hop_port)
 			rescue Exception => e 
 				# TODO
-				puts "failed"
+				Logger.error("#{e} #{next_hop_ip} #{next_hop_port}")
 			end
 		}
 

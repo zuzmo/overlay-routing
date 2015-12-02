@@ -124,7 +124,6 @@ require 'thread'
 	#        +file -> the destination file
 	# =========================================================================
 	def dumptable(file)
-
 		cost_map, ip_map, interfaces_map =  Utility.read_link_costs("./#{@weights_file_name}")
 
 		graph = Graph.new($_linked_cost_map)

@@ -51,9 +51,10 @@ require 'thread'
 		 config_options = Utility.read_config(@config_file_name)
 		 @update_interval = config_options["updateInterval"]
 		 @weights_file_name = config_options["weightFile"]
-		 @link_cost_map, @hostname_ip_map = Utility.read_link_costs("./#{@weights_file_name}")
+		 @link_cost_map, @hostname_ip_map, @interfaces_map = Utility.read_link_costs("./#{@weights_file_name}")
 		 $_linked_cost_map = @link_cost_map
 		 $_hostname_ip_map = @hostname_ip_map
+		 $_interface_map = @interfaces_map
 		 dbg("done read_config_file()")
 	end
 
@@ -124,7 +125,6 @@ require 'thread'
 	#        +file -> the destination file
 	# =========================================================================
 	def dumptable(file)
-		cost_map, ip_map, interfaces_map =  Utility.read_link_costs("./#{@weights_file_name}")
 
 		graph = Graph.new($_linked_cost_map)
 		table = graph.forwarding_table($_node_name)
@@ -136,10 +136,10 @@ require 'thread'
 
 			# Printing DUMPTABLE
 			next_hop_node = table[dest_node][1]
-			next_hop_ip = ip_map[$_node_name][next_hop_node]
+			next_hop_ip = $_hostname_ip_map[$_node_name][next_hop_node]
 
-			for src_ip in interfaces_map[$_node_name]
-				for dest_ip in interfaces_map[dest_node]
+			for src_ip in $_interface_map[$_node_name]
+				for dest_ip in $_interface_map[dest_node]
 					file_contents << "#{src_ip} #{dest_ip} #{next_hop_ip} #{cost}\n"
 				end
 			end

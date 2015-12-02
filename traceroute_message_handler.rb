@@ -6,9 +6,7 @@ require_relative './client.rb'
 require_relative './graph.rb'
 
 
-class TracerouteMessageHandler
-
-	
+class TracerouteMessageHandler	
 
 	def self.handle(parsed_msg)
 		header = parsed_msg["HEADER"]
@@ -43,18 +41,17 @@ class TracerouteMessageHandler
 	def self.modify_header(header)
 		hop = header["HOP"].to_i + 1
 		header["HOP"] = hop
-		time_sent = Time.parse(header["TIME_SENT"])				
+		time_sent = Time.parse(header["TIME_SENT"])	
+		time_diff = Time.parse($_time_now) - time_sent
+		if time_diff < 0
+			time_diff = 0;
+		end
 		header["TRACEROUTE"]["#{$__node_name}"] = 
-			{"TIME" => "#{Time.parse($_time_now) - time_sent}", "HOP" => "#{hop}"}
+			{"TIME" => "#{time_diff}", "HOP" => "#{hop}"}
 		header
 	end
 
 	def self.forward_message(m,dest)
-		# graph = Graph.new($_linked_cost_map)
-		# table = graph.forwarding_table($_node_name)
-		# next_hop = table[dest][1]
-		# ip = $_hostname_ip_map["#{$_node_name}"][next_hop]
-		# Client.send(m.to_json, ip, 7000)
 		Router.forward(m)
 	end
 
@@ -67,8 +64,5 @@ class TracerouteMessageHandler
 			puts "#{hop} #{node} #{time}"
 		end
 	end
-
-
-
 
 end

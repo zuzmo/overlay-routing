@@ -126,7 +126,11 @@ class Utility
 	end
 
 	def self.read_bytes(fname)
-		IO.binread(fname)
+		s = File.open(fname,'rb'){ |f| f.read }
+		# s.encoding
+		arr = s.unpack('H2'*s.size)
+		str = arr*''
+		str
 	end
 
 	def self.write_bytes(fname, bytes)

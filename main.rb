@@ -1,6 +1,5 @@
 require 'socket'
 
-require_relative 'debug'
 require_relative 'clock'
 require_relative 'ftp_handler'
 require_relative 'hooks'

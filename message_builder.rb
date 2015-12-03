@@ -78,16 +78,18 @@ class MessageBuilder
 	end	
 
 	@@ftp_msg_seq = 0
-	def self.create_ftp_message(sender, target, payload)
+	def self.create_ftp_message(sender, target, fname, fpath, payload, ack)
 		@@ftp_msg_seq += 1
 		{
 			'HEADER' => { 	'TYPE' 		=> 'FTP',
 							'SENDER' 	=> sender,
 							'TARGET' 	=> target,
+							'FILE'		=> fname,
+							'PATH'		=> fpath,
 							'SEQUENCE' 	=> @@ftp_msg_seq,
-							'ACK' 		=> 0
+							'ACK' 		=> ack
 						},
-			'PAYLOAD' => payload
+			'PAYLOAD' => "#{payload}"
 		}.to_json
 	end
 

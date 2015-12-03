@@ -39,9 +39,8 @@ class MessageBuilder
 		}.to_json
 	end
 
-
-	@@ping_msg_seq = 0
-	def self.create_ping_message(sender, target, ack)
+	@@ping_msg_seq = -1
+	def self.create_ping_message(sender, target, num_pings, time)
 		@@ping_msg_seq += 1
 		{
 				'HEADER' =>
@@ -49,7 +48,10 @@ class MessageBuilder
 						 'SENDER' => sender,
 						 'TARGET' => target,
 						 'SEQUENCE' => @@ping_msg_seq,
-						 'ACK' => ack
+						 'ACK' => 0,
+						 'NUM_PINGS' => num_pings,
+						 'TIME_SENT' => "#{time}"
+
 						},
 				'PAYLOAD' => 'test'
 		}.to_json

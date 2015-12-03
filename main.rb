@@ -2,6 +2,7 @@ require 'socket'
 
 require_relative 'debug'
 require_relative 'clock'
+require_relative 'hooks'
 require_relative 'link_state_manager'
 require_relative 'logger'
 require_relative 'send_message_handler'
@@ -81,15 +82,15 @@ loop do
     
     case user_input
     when /^DUMPTABLE\s[\w\d\.]*/
-    	# GONZALO
-      # file_name = user_input.split(" ")[1]
-      #todo
+    	# Gonzalo
+    	fname = $1
+    	Hooks.dump_table(fname)
     when /^FORCEUPDATE/
     	# Gonzalo
-    	LinkStateManager.broadcast_link_state
+    	Hooks.force_update
     when /^CHECKSTABLE/
     	# Gonzalo
-    	LinkStateManager.check_stable?
+    	Hooks.check_stable
     when /^SHUTDOWN/
     	# George
     	STDOUT.flush
@@ -98,17 +99,21 @@ loop do
     	# Gonzalo
 	    dst, msg = $1, $2
 	    SendMessageHandler.handle_from_console(dst, msg)
-  	when /^TRACEROUTE\s[\w\d\.]*/
+  	when /^TRACEROUTE\s+(.+)/
   		# George
-		dest = user_input.split(" ")[1]
-		TracerouteMessageHandler.handle_from_console(dest)
-	when /^PING\s[\w\d\.]*/
+		dst = $1
+		TracerouteMessageHandler.handle_from_console(dst)
+	when /^PING\s+(.+)\s+(\d+)\s+(\d+)/
+		dst, num_pings, delay = $1, $2, $3
 		# Ivy
-	when /^FTP/
+	when /^FTP\s+(.+)\s+(.+)\s+(.+)/
+		dst, file, file_path = $1, $2, $3
 		# Gonzalo
-	when /^POST/
+	when /^POSTs\s+(.+)\s+(.+)/
+		niq_id, nodes = $1, $2
 		# ALL
-	when /^ADVERTISE/
+	when /^ADVERTISEs\s+(.+)\s+(.+)/
+		uniq_id, msg = $1, $2
 		# ALL
 	when /^CLOCKSYNC/
 		ClocksyncMessageHandler.handle_from_console

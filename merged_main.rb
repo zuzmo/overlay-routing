@@ -83,7 +83,7 @@ loop do
     when /^DUMPTABLE\s(.+)/
     	# Gonzalo
     	fname = $1
-    	Hooks.dumptable(fname)
+    	Hooks.dump_table(fname)
     when /^FORCEUPDATE/
     	# Gonzalo
     	Hooks.force_update

@@ -73,5 +73,19 @@ class MessageBuilder
 		traceroute_message.to_json
 	end	
 
+	@@ftp_msg_seq = 0
+	def self.create_ftp_message(sender, target, payload)
+		@@ftp_msg_seq += 1
+		{
+			'HEADER' => { 	'TYPE' 		=> 'FTP',
+							'SENDER' 	=> sender,
+							'TARGET' 	=> target,
+							'SEQUENCE' 	=> @@ftp_msg_seq,
+							'ACK' 		=> 0
+						},
+			'PAYLOAD' => payload
+		}.to_json
+	end
+
 
 end

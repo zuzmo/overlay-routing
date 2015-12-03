@@ -9,16 +9,12 @@ class Router
 
 	def self.forward(parsed_msg)
 		@@semaphore.synchronize {
-			
+
 			dst = parsed_msg['HEADER']['TARGET']
 			src, next_hop = @@fwd_table[dst]
-
-			# puts "src: #{src}, next_hop: #{next_hop}"
-
 			next_hop_ip = LinkStateManager.get_ip(src, next_hop)
 			next_hop_port = $__node_ports[next_hop]
 			msg = parsed_msg.to_json
-			# puts "triple: #{next_hop_ip}, #{next_hop_port}, #{msg}"
 			begin
 				Client.send(msg, next_hop_ip, next_hop_port)
 			rescue Exception => e 

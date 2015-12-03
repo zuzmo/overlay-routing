@@ -68,9 +68,9 @@ $_time_now
 Thread.new{
 	@clock = Clock.new
 	loop do
-		sleep 1
 		@clock.tick(1)
 		$_time_now = @clock.get_time
+		sleep 1
 	end
 }
 

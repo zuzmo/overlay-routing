@@ -56,13 +56,15 @@ class MessageBuilder
 
 	end
 
-	def self.create_traceroute_message(sender,target,sequence,time_sent,ack)
+	@@traceroute_msg_seq =  -1
+	def self.create_traceroute_message(sender,target,time_sent,ack)
+		@@flood_msg_seq +=  1
 		traceroute_message = {
 				"HEADER" =>
 						{"TYPE" => "TRACEROUTE",
 						 "SENDER" => "#{sender}",
 						 "TARGET" => "#{target}",
-						 "SEQUENCE" => "#{sequence}",
+						 "SEQUENCE" => "#{@@flood_msg_seq}",
 						 "TIME_SENT" => "#{time_sent}",
 						 "HOP" => 0,
 						 "TRACEROUTE" => {"#{sender}" => {"TIME" => "0.0","HOP" => "0"}},
@@ -87,5 +89,21 @@ class MessageBuilder
 		}.to_json
 	end
 
+	@@clocksync_msg_seq =  -1
+	def self.create_clocksync_message(sender,target,time_sent,ack)
+		@@flood_msg_seq +=  1
+		traceroute_message = {
+				"HEADER" =>
+						{"TYPE" => "CLOCKSYNC",
+						 "SENDER" => "#{sender}",
+						 "TARGET" => "#{target}",
+						 "SEQUENCE" => "#{@@clocksync_msg_seq}",
+						 "TIME_SENT" => "#{time_sent}",
+						 "ACK" => "#{ack}"
+						},
+				"PAYLOAD" => "test"
+		}
+		traceroute_message.to_json
+	end
 
 end

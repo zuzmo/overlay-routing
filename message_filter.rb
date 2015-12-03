@@ -25,7 +25,11 @@ class MessageFilter
 		elsif 	type 	== 'PING'
 			PingMessageHandler.handle_received(parsed_msg)
 		elsif 	type 	== 'FTP'
-			FtpHandler.handle_received(parsed_msg)
+			if parsed_msg['HEADER']['ACK'] = 1
+				FtpHandler.handle_ack(parsed_msg)
+			else
+				FtpHandler.handle_received(parsed_msg)
+			end
 		elsif 	type 	== 'TRACEROUTE'
 			TracerouteMessageHandler.handle(parsed_msg)
 		elsif  	type 	== 'CLOCKSYNC'

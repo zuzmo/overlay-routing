@@ -41,8 +41,7 @@ class Router
 
 				dst = parsed_msg['HEADER']['TARGET']
 				src, next_hop = @@fwd_table[dst]
-
-				# puts "src: #{src}, next_hop: #{next_hop}"
+				raise 'node not in table' if src.nil? or next_hop.nil?
 
 				next_hop_ip = LinkStateManager.get_ip(src, next_hop)
 				next_hop_port = $__node_ports[next_hop]

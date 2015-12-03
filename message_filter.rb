@@ -3,6 +3,7 @@ require 'json'
 require_relative 'hello_message_handler'
 require_relative 'flood_message_handler'
 require_relative 'send_message_handler'
+require_relative 'ping_message_handler'
 require_relative 'traceroute_message_handler'
 
 #==========================================================
@@ -21,6 +22,8 @@ class MessageFilter
 			FloodMessageHandler.handle_received(parsed_msg)
 		elsif 	type 	== 'SNDMSG'
 			SendMessageHandler.handle_received(parsed_msg)
+		elsif 	type 	== 'PING'
+			PingMessageHandler.handle_received(parsed_msg)
 		elsif 	type 	== 'FTP'
 			FtpHandler.handle_received(parsed_msg)
 		elsif 	type 	== 'TRACEROUTE'

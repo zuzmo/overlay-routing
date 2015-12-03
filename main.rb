@@ -7,6 +7,7 @@ require_relative 'hooks'
 require_relative 'link_state_manager'
 require_relative 'logger'
 require_relative 'send_message_handler'
+require_relative 'ping_message_handler'
 require_relative 'clocksync_message_handler'
 require_relative 'server'
 require_relative 'utility'
@@ -105,8 +106,9 @@ loop do
 		dst = $1
 		TracerouteMessageHandler.handle_from_console(dst)
 	when /^PING\s+(.+)\s+(\d+)\s+(\d+)/
-		dst, num_pings, delay = $1, $2, $3
 		# Ivy
+    dst, num_pings, delay = $1, $2, $3
+		PingMessageHandler.handle_from_console(dst, num_pings.to_i, delay.to_i)
 	when /^FTP\s+(.+)\s+(.+)\s+(.+)/
 		# Gonzalo
 		dst, file, file_path = $1, $2, $3

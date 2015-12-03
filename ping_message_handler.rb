@@ -10,6 +10,8 @@ class PingMessageHandler
 
   def self.handle_from_console(dst, num_pings, delay)
 
+
+
     # Build a packet and forward.
     packet = MessageBuilder.create_ping_message($__node_name, dst, num_pings, $_time_now)
 
@@ -18,8 +20,17 @@ class PingMessageHandler
     packet['HEADER']['SEQUENCE'] = 0
     packet['HEADER']['ACK'] = 0
 
+	if dst == $__node_name
+  		Client.send_local(packet.to_json, $__port)
+  	end
+
     @delay_time = delay
+
+    begin
     forward(JSON.parse(packet.to_json))
+	rescue Exception => e
+		puts e
+	end
 
   end
 

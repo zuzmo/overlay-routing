@@ -75,6 +75,20 @@ class MessageBuilder
 		traceroute_message.to_json
 	end	
 
+	@@ftp_msg_seq = 0
+	def self.create_ftp_message(sender, target, payload)
+		@@ftp_msg_seq += 1
+		{
+			'HEADER' => { 	'TYPE' 		=> 'FTP',
+							'SENDER' 	=> sender,
+							'TARGET' 	=> target,
+							'SEQUENCE' 	=> @@ftp_msg_seq,
+							'ACK' 		=> 0
+						},
+			'PAYLOAD' => payload
+		}.to_json
+	end
+
 	@@clocksync_msg_seq =  -1
 	def self.create_clocksync_message(sender,target,time_sent,ack)
 		@@flood_msg_seq +=  1
@@ -90,7 +104,6 @@ class MessageBuilder
 				"PAYLOAD" => "test"
 		}
 		traceroute_message.to_json
-	end	
-
+	end
 
 end

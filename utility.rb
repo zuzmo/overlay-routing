@@ -1,3 +1,5 @@
+require 'io/console'
+
 class Utility
 
 	# =========================================================================
@@ -123,14 +125,12 @@ class Utility
 		}
 	end
 
-	# Returns the size of the specified string in bytes
-	def self.num_bytes(str)
-		str.bytesize
+	def self.read_bytes(fname)
+		IO.binread(fname)
 	end
 
-	# Returns the size of the specified string in bytes
-	def self.num_bytes2(str)
-		str.length
+	def self.write_bytes(fname, bytes)
+		File.write(fname, bytes)
 	end
 
 end

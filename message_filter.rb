@@ -21,9 +21,11 @@ class MessageFilter
 			FloodMessageHandler.handle_received(parsed_msg)
 		elsif 	type 	== 'SNDMSG'
 			SendMessageHandler.handle_received(parsed_msg)
+		elsif 	type 	== 'FTP'
+			FtpHandler.handle_received(parsed_msg)
 		elsif 	type 	== 'TRACEROUTE'
 			TracerouteMessageHandler.handle(parsed_msg)
-		elsif  type 	== 'CLOCKSYNC'
+		elsif  	type 	== 'CLOCKSYNC'
 			ClocksyncMessageHandler.handle(parsed_msg)
 		end
 	end

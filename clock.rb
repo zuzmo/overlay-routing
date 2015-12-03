@@ -32,7 +32,13 @@ class Clock
 		@time += seconds
 	end
 
-
+	def get_formatted_time()
+		time = @time
+		hour = format('%02d',"#{time.hour}")
+		min = format('%02d',"#{time.min}")
+		sec = format('%02d',"#{time.sec}")
+		return "#{hour}:#{min}:#{sec}"
+	end
 end
 
 

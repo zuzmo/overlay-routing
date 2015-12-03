@@ -1,6 +1,5 @@
 require 'socket'
 
-require_relative 'debug'
 require_relative 'clock'
 require_relative 'ftp_handler'
 require_relative 'hooks'
@@ -66,12 +65,13 @@ Thread.new {LinkStateManager.handle_flooding}
 # 4. Start thread that updates clock
 #==========================================================
 $_time_now
+$_clock
 Thread.new{
-	@clock = Clock.new
+	$_clock = Clock.new
 	loop do
 		sleep 1
-		@clock.tick(1)
-		$_time_now = @clock.get_time
+		$_clock.tick(1)
+		$_time_now = $_clock.get_time
 	end
 }
 

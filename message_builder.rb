@@ -91,10 +91,10 @@ class MessageBuilder
 		}.to_json
 	end
 
-	@@clocksync_msg_seq =  -1
+	@@clocksync_msg_seq = 0
 	def self.create_clocksync_message(sender,target,time_sent,ack)
-		@@flood_msg_seq +=  1
-		traceroute_message = {
+		@@clocksync_msg_seq +=  1
+		clocksync_message = {
 				"HEADER" =>
 						{"TYPE" => "CLOCKSYNC",
 						 "SENDER" => "#{sender}",
@@ -105,7 +105,7 @@ class MessageBuilder
 						},
 				"PAYLOAD" => "test"
 		}
-		traceroute_message.to_json
+		clocksync_message.to_json
 	end
 
 end

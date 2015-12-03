@@ -2,6 +2,7 @@ require 'socket'
 
 require_relative 'debug'
 require_relative 'clock'
+require_relative 'ftp_handler'
 require_relative 'hooks'
 require_relative 'link_state_manager'
 require_relative 'logger'
@@ -81,7 +82,7 @@ loop do
     user_input = STDIN.gets.chomp
     
     case user_input
-    when /^DUMPTABLE\s[\w\d\.]*/
+    when /^DUMPTABLE\s+(.+)/
     	# Gonzalo
     	fname = $1
     	Hooks.dump_table(fname)
@@ -107,8 +108,9 @@ loop do
 		dst, num_pings, delay = $1, $2, $3
 		# Ivy
 	when /^FTP\s+(.+)\s+(.+)\s+(.+)/
-		dst, file, file_path = $1, $2, $3
 		# Gonzalo
+		dst, file, file_path = $1, $2, $3
+		FtpHandler.handle_from_console(dst, file, file_path)
 	when /^POSTs\s+(.+)\s+(.+)/
 		niq_id, nodes = $1, $2
 		# ALL

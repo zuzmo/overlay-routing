@@ -1,4 +1,5 @@
 require_relative 'link_state_manager'
+require_relative 'logger'
 
 class Hooks
 
@@ -14,9 +15,9 @@ class Hooks
 
 	def self.check_stable
 		if LinkStateManager.check_stable?
-			puts 'yes'
+			Logger.info('yes')
 		else
-			puts 'no'
+			Logger.info('no')
 		end
 	end
 end

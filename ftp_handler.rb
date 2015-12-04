@@ -1,6 +1,7 @@
 require 'json'
 
 require_relative 'fragmenter'
+require_relative 'logger'
 require_relative 'message_builder'
 require_relative 'router'
 require_relative 'utility'
@@ -10,7 +11,7 @@ class FtpHandler
 	$__ftp_count = 0
 	def self.handle_from_console(dst, fname, fpath)
 		if dst == $__node_name
-			puts "Invalid node: #{dst}"
+			Logger.error("Invalid node: #{dst}")
 		else
 			#read file
 			payload, nbytes = Utility.read_bytes(fname)
@@ -33,7 +34,7 @@ class FtpHandler
 		bytes = arr.pack('H2'*arr.size)
 		file_path = fpath + "/"+ fname
 		Utility.write_bytes(file_path, bytes)
-		puts "FTP: #{src} --> #{fpath}/#{fname}"
+		Logger.info("FTP: #{src} --> #{fpath}/#{fname}")
 
 		# send ack
 		msg = MessageBuilder.create_ftp_message($__node_name, src, fname, fpath, nbytes, '-', 'true', dep_time, arr_time)
@@ -46,14 +47,14 @@ class FtpHandler
 		nbytes = parsed_msg['HEADER']['BYTES']
 		dep_time = parsed_msg['HEADER']['DEPTIME']
 		arr_time = parsed_msg['HEADER']['ARRTIME']
-		puts "#{fname} --> #{dst} in t at #{nbytes}"
+		Logger.info("#{fname} --> #{dst} in t at #{nbytes}")
 	end
 
 	def self.handle_transmission_error(parsed_msg)
 		fname = parsed_msg['HEADER']['FILE']
 		dst = parsed_msg['HEADER']['SENDER']
 		byte_count = parsed_msg['HEADER']['BYTES']
-		puts "FTP ERROR: #{fname} --> #{dst} INTERRUPTED AFTER #{byte_count}"
+		Logger.error("FTP ERROR: #{fname} --> #{dst} INTERRUPTED AFTER #{byte_count}")
 
 	end
 
@@ -73,7 +74,6 @@ class FtpHandler
 					# send transmission error back to source
 					msg = MessageBuilder.create_ftp_message(target, dst, fname, fpath, nbytes, '-', 'error', '-', '-')
 					Router.forward_ftp(JSON.parse(msg))
-
 				end		
 			end
 		end

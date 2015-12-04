@@ -90,7 +90,6 @@ class Router
 				Client.send_ftp(msg, next_hop_ip, next_hop_port)
 			rescue Exception => e 
 				# pass exception to caller
-				# puts e
 				raise Exception, e
 				# Logger.error("#{e} #{next_hop_ip} #{next_hop_port}")
 			end

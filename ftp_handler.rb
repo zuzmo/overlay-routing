@@ -19,7 +19,8 @@ class FtpHandler
 
 	def self.handle_received(parsed_msg)
 		if parsed_msg['HEADER']['TARGET'] == $__node_name
-			seq_num = ['HEADER']['SEQUENCE'] + 1
+			seq_num = parsed['HEADER']['SEQUENCE'] + 1
+			dst = parsed_msg['HEADER']['SENDER']
 			# prepare ack msg
 			ack_msg = MessageBuilder.create_ftp_message($_node_name, dst, '', '', '', seq, $_time_now)
 			# save to disk

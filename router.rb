@@ -21,7 +21,8 @@ class Router
 				Client.send(msg, next_hop_ip, next_hop_port)
 			rescue Exception => e 
 				# TODO
-				Logger.error("#{e} #{next_hop_ip} #{next_hop_port}")
+				raise 'unreachable node'
+				# Logger.error("#{e} #{next_hop_ip} #{next_hop_port}")
 			end
 		}
 

@@ -13,6 +13,7 @@ class Router
 
 			dst = parsed_msg['HEADER']['TARGET']
 			src, next_hop = @@fwd_table[dst]
+			raise 'node not in table' if src.nil? or next_hop.nil?
 			next_hop_ip = LinkStateManager.get_ip(src, next_hop)
 			next_hop_port = $__node_ports[next_hop]
 			msg = parsed_msg.to_json
@@ -48,6 +49,10 @@ class Router
 
 				dst = parsed_msg['HEADER']['TARGET']
 				src, next_hop = @@fwd_table[dst]
+
+				raise 'node not in table' if src.nil? or next_hop.nil?
+
+
 				next_hop_ip = LinkStateManager.get_ip(src, next_hop)
 				next_hop_port = $__node_ports[next_hop]
 				msg = parsed_msg.to_json

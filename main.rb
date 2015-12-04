@@ -69,9 +69,9 @@ $_clock
 Thread.new{
 	$_clock = Clock.new
 	loop do
-		sleep 1
 		$_clock.tick(1)
 		$_time_now = $_clock.get_time
+		sleep 1
 	end
 }
 

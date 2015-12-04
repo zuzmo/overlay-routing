@@ -78,7 +78,7 @@ class MessageBuilder
 	end	
 
 	@@ftp_msg_seq = 0
-	def self.create_ftp_message(sender, target, fname, fpath, payload, ack, time)
+	def self.create_ftp_message(sender, target, fname, fpath, nbytes, payload, ack, dep_time, arr_time)
 		@@ftp_msg_seq += 1
 		{
 			'HEADER' => { 	'TYPE' 		=> 'FTP',
@@ -86,8 +86,10 @@ class MessageBuilder
 							'TARGET' 	=> target,
 							'FILE'		=> fname,
 							'PATH'		=> fpath,
+							'BYTES'		=> nbytes,
 							'SEQUENCE' 	=> @@ftp_msg_seq,
-							'TIME'		=> time,
+							'DEPTIME'	=> dep_time,
+							'ARRTIME'	=> arr_time,
 							'ACK' 		=> ack
 						},
 			'PAYLOAD' => "#{payload}"

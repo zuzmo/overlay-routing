@@ -1,50 +1,82 @@
 require 'json'
 
+require_relative 'fragmenter'
 require_relative 'message_builder'
+require_relative 'router'
 require_relative 'utility'
 
 class FtpHandler
 
+	$__ftp_count = 0
 	def self.handle_from_console(dst, fname, fpath)
 		if dst == $__node_name
 			puts "Invalid node: #{dst}"
 		else
 			#read file
-			payload = Utility.read_bytes(fname)
-			print payload
-			msg = MessageBuilder.create_ftp_message($__node_name, dst, fname, fpath, payload, 0, $_time_now)
+			payload, nbytes = Utility.read_bytes(fname)
+			msg = MessageBuilder.create_ftp_message($__node_name, dst, fname, fpath, nbytes, payload, 'false', $_time_now, '-')
 			forward(JSON.parse(msg))
 		end
 	end
 
-	def self.handle_received(parsed_msg)
-		if parsed_msg['HEADER']['TARGET'] == $__node_name
-			seq_num = parsed['HEADER']['SEQUENCE'] + 1
-			dst = parsed_msg['HEADER']['SENDER']
-			# prepare ack msg
-			ack_msg = MessageBuilder.create_ftp_message($_node_name, dst, '', '', '', seq, $_time_now)
-			# save to disk
-			fname = parsed_msg['HEADER']['FILE']
-			fpath = parsed_msg['HEADER']['PATH']
-			payload = parsed_msg['PAYLOAD']
-			arr = Fragmenter.chunkify(payload, 2)
-			bytes = arr.pack('H2'*arr.size)
-			file_path = fpath + "/"+ fname
-			Utility.write_bytes(file_path, bytes)
-			# send ack
-			forward(ack_msg)
-		else
-			forward(parsed_msg)
-		end
+	def self.handle_im_target(parsed_msg)
+		src = parsed_msg['HEADER']['SENDER']
+		
+		fname = parsed_msg['HEADER']['FILE']
+		fpath = parsed_msg['HEADER']['PATH']
+		nbytes = parsed_msg['HEADER']['BYTES']
+		payload = parsed_msg['PAYLOAD']
+		dep_time = parsed_msg['HEADER']['DEPTIME']
+		arr_time = $_time_now
+		# save to disk
+		arr = Fragmenter.chunkify(payload, 2)
+		bytes = arr.pack('H2'*arr.size)
+		file_path = fpath + "/"+ fname
+		Utility.write_bytes(file_path, bytes)
+		puts "FTP: #{src} --> #{fpath}/#{fname}"
+
+		# send ack
+		msg = MessageBuilder.create_ftp_message($__node_name, src, fname, fpath, nbytes, '-', 'true', dep_time, arr_time)
+		forward(JSON.parse(msg))
 	end
 
-	def self.handle_ack(parsed_msg)
-		puts "ack: #{parsed_msg}"
+	def self.handle_received_ack(parsed_msg)
+		fname = parsed_msg['HEADER']['FILE']
+		dst = parsed_msg['HEADER']['SENDER']
+		nbytes = parsed_msg['HEADER']['BYTES']
+		dep_time = parsed_msg['HEADER']['DEPTIME']
+		arr_time = parsed_msg['HEADER']['ARRTIME']
+		puts "#{fname} --> #{dst} in t at #{nbytes}"
+	end
+
+	def self.handle_transmission_error(parsed_msg)
+		fname = parsed_msg['HEADER']['FILE']
+		dst = parsed_msg['HEADER']['SENDER']
+		byte_count = parsed_msg['HEADER']['BYTES']
+		puts "FTP ERROR: #{fname} --> #{dst} INTERRUPTED AFTER #{byte_count}"
 
 	end
 
 	def self.forward(parsed_msg)
-		Router.forward(parsed_msg)
+		Thread.new do
+			begin
+				Router.forward_ftp(parsed_msg)
+			rescue Exception => e
+				if e == 'not in table'
+				
+				else
+					dst = parsed_msg['HEADER']['SENDER']
+					target = parsed_msg['HEADER']['TARGET']
+					fname = parsed_msg['HEADER']['FILE']
+					fpath = parsed_msg['HEADER']['PATH']
+					nbytes = ((e.to_s.to_i) / 2) * ($__max_packet_size.to_i)
+					# send transmission error back to source
+					msg = MessageBuilder.create_ftp_message(target, dst, fname, fpath, nbytes, '-', 'error', '-', '-')
+					Router.forward_ftp(JSON.parse(msg))
+
+				end		
+			end
+		end
 	end
 
 end

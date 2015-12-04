@@ -1,7 +1,5 @@
 require 'json'
 
-require_relative 'utility'
-
 #==========================================================
 # Fragmenter converts a message into packets depending on 
 # the maxPacketSize (payload) option in the config file.

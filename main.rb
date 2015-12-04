@@ -65,11 +65,12 @@ Thread.new {LinkStateManager.handle_flooding}
 # 4. Start thread that updates clock
 #==========================================================
 $_time_now
+$_clock
 Thread.new{
-	@clock = Clock.new
+	$_clock = Clock.new
 	loop do
-		@clock.tick(1)
-		$_time_now = @clock.get_time
+		$_clock.tick(1)
+		$_time_now = $_clock.get_time
 		sleep 1
 	end
 }

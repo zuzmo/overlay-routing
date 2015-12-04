@@ -37,24 +37,36 @@ class Router
 				neighbor_set.add(v[1])
 			end
 
+			#arr = []
+
+
 			neighbor_set.each do |neighbor|
+				# copy = {}
+				# copy = parsed_msg.clone
 				parsed_msg["HEADER"]["TARGET"] = neighbor
+				# arr.push(copy)
+				# puts copy
+
 
 				dst = parsed_msg['HEADER']['TARGET']
 				src, next_hop = @@fwd_table[dst]
+
 				raise 'node not in table' if src.nil? or next_hop.nil?
+
 
 				next_hop_ip = LinkStateManager.get_ip(src, next_hop)
 				next_hop_port = $__node_ports[next_hop]
 				msg = parsed_msg.to_json
-				# puts "triple: #{next_hop_ip}, #{next_hop_port}, #{msg}"
 				begin
 					Client.send(msg, next_hop_ip, next_hop_port)
 				rescue Exception => e 
 					# TODO
 					Logger.error("#{e} #{next_hop_ip} #{next_hop_port}")
 				end
+
 			end
+			neighbor_set.length
+			
 		}
 	end
 

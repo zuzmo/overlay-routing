@@ -8,6 +8,7 @@ require_relative 'message_builder'
 
 class PingMessageHandler
 
+ 
   def self.handle_from_console(dst, num_pings, delay)
 
     # Build a packet and forward.
@@ -17,12 +18,41 @@ class PingMessageHandler
     packet = (JSON.parse(packet))
     packet['HEADER']['SEQUENCE'] = 0
     packet['HEADER']['ACK'] = 0
+	
+	seq = packet['HEADER']['SEQUENCE']
 
-    @delay_time = delay
-    forward(JSON.parse(packet.to_json))
+	@delay_time = delay
+
+
+	if dst == $__node_name
+		
+  		while num_pings > 0
+  			# 
+  			# target = packet['HEADER']['TARGET']
+  			# packet['HEADER']['TIME_SENT'] = $_time_now
+  			# print_result(packet, seq, target)
+
+
+  			puts "#{seq} #{dst} #{0.0}"
+  			seq += 1
+  			num_pings -= 1
+  			sleep(@delay_time)
+  		end
+  	else
+		begin
+    		forward(JSON.parse(packet.to_json))
+		rescue Exception => e
+			puts e
+			puts "PING ERROR: HOST UNREACHABLE"
+		end
+  	end  
 
   end
 
+
+  #====================================
+  # Handle the packet that is received.
+  #====================================
   def self.handle_received(parsed_msg)
 
     if parsed_msg['HEADER']['TARGET'] == $__node_name
@@ -53,41 +83,56 @@ class PingMessageHandler
         parsed_msg['HEADER']['SENDER'] = sender
         parsed_msg['HEADER']['ACK'] = ack + 1
 
-        forward(JSON.parse(parsed_msg.to_json))
+        begin
+        	forward(JSON.parse(parsed_msg.to_json))
+        rescue Exception => e
+        	puts "PING ERROR: HOST UNREACHABLE"
+        end
+
       else
 
         # Src needs to transmit [num_pings] number of packets to dest.
         # Src updates the value of ['NUM_PINGS'] number of packets more on way.
 
         if num_pings == 0
-          # All packets have been sent [num_pings] times.
+          	# All packets have been sent [num_pings] times.
 
         else
+        	print_result(parsed_msg, seq, target)
 
-          print_result(parsed_msg, seq, target)
 
+          	# Sleep for [@delay_time] before sending another packet.
+          	sleep(@delay_time)
 
-          # Sleep for [@delay_time] before sending another packet.
-          sleep(@delay_time)
+         	# Creating a new packet, which will be sent by src to dest
+          	# with sender and target swapped and incrementing seq.
 
-          # Creating a new packet, which will be sent by src to dest
-          # with sender and target swapped and incrementing seq.
+          	parsed_msg['HEADER']['TARGET'] = target
+          	parsed_msg['HEADER']['SENDER'] = sender
+          	parsed_msg['HEADER']['SEQUENCE'] = seq + 1
+          	parsed_msg['HEADER']['NUM_PINGS'] = num_pings - 1
+          	parsed_msg['HEADER']['TIME_SENT'] = $_time_now
 
-          parsed_msg['HEADER']['TARGET'] = target
-          parsed_msg['HEADER']['SENDER'] = sender
-          parsed_msg['HEADER']['SEQUENCE'] = seq + 1
-          parsed_msg['HEADER']['NUM_PINGS'] = num_pings - 1
-          parsed_msg['HEADER']['TIME_SENT'] = $_time_now
+          	begin
+				forward(JSON.parse(parsed_msg.to_json))
+			rescue Exeption => e
+				puts "PING ERROR: HOST UNREACHABLE"
+			end
 
-          forward(JSON.parse(parsed_msg.to_json))
+	
         end
 
       end
 
 
     else
-      # Keep forwarding until dest is reached.
-      forward(parsed_msg)
+    	# Keep forwarding until dest is reached.
+    	begin
+    		forward(parsed_msg)
+    	rescue Exception => e
+    		puts "PING ERROR: HOST UNREACHABLE"
+    	end
+
     end
   end
 

@@ -39,24 +39,21 @@ class MessageBuilder
 		}.to_json
 	end
 
-	@@ping_msg_seq = -1
-	def self.create_ping_message(sender, target, num_pings, time)
-		@@ping_msg_seq += 1
+	def self.create_ping_message(sender, target, seq, ack, time)
 		{
-				'HEADER' =>
-						{'TYPE' => 'PING',
-						 'SENDER' => sender,
-						 'TARGET' => target,
-						 'SEQUENCE' => @@ping_msg_seq,
-						 'ACK' => 0,
-						 'NUM_PINGS' => num_pings,
-						 'TIME_SENT' => "#{time}"
-
-						},
-				'PAYLOAD' => 'test'
+			'HEADER' =>
+					{'TYPE' => 'PING',
+					 'SENDER' => sender,
+					 'TARGET' => target,
+					 'SEQUENCE' => seq,
+					 'ACK' => "#{ack}",
+					 'TIME_SENT' => "#{time}"
+					},
+			'PAYLOAD' => 'test'
 		}.to_json
 
 	end
+
 
 	@@traceroute_msg_seq =  -1
 	def self.create_traceroute_message(sender,target,time_sent,ack)

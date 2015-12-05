@@ -45,13 +45,13 @@ class LinkStateManager
         end
 
         #---------------------------------------------------
-        # send packet to alive neighbors
+        # send packet to online neighbors
         #---------------------------------------------------
         flood_msg = MessageBuilder.create_flood_message($__node_name, link_state_message.to_json)
         begin
         	Client.send_local(flood_msg, $__node_ports[$__node_name])
         rescue Exception => e
-            Logger.error("#{e} local")
+            # Logger.error("#{e} local")
         end
 	end
 
@@ -97,7 +97,7 @@ class LinkStateManager
 							begin
 								Client.send(parsed_flood_msg.to_json, ip, port)
 							rescue Exception => e
-								Logger.error("#{e} #{neighbor}")
+								# Logger.error("#{e} #{neighbor}")
 							end
 						end
 					end
@@ -130,7 +130,7 @@ class LinkStateManager
 								begin
 									Client.send(parsed_flood_msg.to_json, ip, port)
 								rescue Exception => e
-									Logger.error("#{e} #{neighbor}")
+									# Logger.error("#{e} #{neighbor}")
 								end
 							end
 						end
@@ -163,14 +163,13 @@ class LinkStateManager
 						begin
 							Client.send(parsed_flood_msg.to_json, ip, port)
 						rescue Exception => e
-							Logger.error("#{e} #{neighbor}")
+							# Logger.error("#{e} #{neighbor}")
 						end
 					end
 				end
 
 			end
 
-			
 			# build graph by using linkstate table
 			if @@parsed_flood_mgs.empty?
 				@@graph_lock.synchronize {

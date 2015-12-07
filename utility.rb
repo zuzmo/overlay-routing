@@ -1,4 +1,5 @@
 require 'io/console'
+require 'openssl'
 
 class Utility
 
@@ -136,6 +137,28 @@ class Utility
 
 	def self.write_bytes(fname, bytes)
 		File.write(fname, bytes)
+	end
+	
+		def self.generate_keys()
+		#=========================================================
+		# RSA Key - Network Security
+		# 2048 is the key size and a recommended size.
+		# Create a private and a public key of every node store 
+		# the keys in separate folders.
+		#=========================================================
+		rsa_key = OpenSSL::PKey::RSA.new 2048
+
+		private_keys_file = "#{$__node_name}.pem"
+		open private_keys_file, 'w' do |io|
+			io.write rsa_key.to_pem
+			io.flush
+		end
+
+		public_keys_file = "#{$__node_name}.pem"
+		open public_keys_file, 'w' do |io|
+			io.write rsa_key.public_key.to_pem
+			io.flush
+		end
 	end
 
 end

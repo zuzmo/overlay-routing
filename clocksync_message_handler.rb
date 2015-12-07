@@ -1,5 +1,6 @@
 require 'json'
 require 'time'
+require_relative 'logger'
 
 class ClocksyncMessageHandler
 
@@ -19,7 +20,7 @@ class ClocksyncMessageHandler
 		sender = parsed_msg["HEADER"]["SENDER"]
 
 		if ack == "false"	
-			puts "CLOCKSYNC from #{sender}: TIME = #{$_clock.get_formatted_time}"
+			Logger.info "CLOCKSYNC from #{sender}: TIME = #{$_clock.get_formatted_time}"
 			reply_to_sender(parsed_msg)
 		else
 			@@replies.push(parsed_msg)
@@ -52,7 +53,7 @@ class ClocksyncMessageHandler
 		min = format('%02d',"#{time.min}")
 		sec = format('%02d',"#{time.sec}")
 
- 		puts "CLOCKSYNC:TIME=#{$_clock.get_formatted_time} DELTA=#{delta}"
+ 		Logger.info "CLOCKSYNC:TIME=#{$_clock.get_formatted_time} DELTA=#{delta}"
  	end
 
 end

@@ -4,13 +4,14 @@ require_relative 'fragmenter'
 require_relative 'message_builder'
 require_relative './client.rb'
 require_relative './graph.rb'
-
+require_relative 'logger'
+	
 
 class TracerouteMessageHandler	
 
 	def self.handle_from_console(dest)
 		if dest == $__node_name
-			puts "0 #{$__node_name} 0.0"
+			Logger.info "0 #{$__node_name} 0.0"
 		else
 			m = MessageBuilder.create_traceroute_message(
 				$__node_name,dest,$_time_now,false)
@@ -74,9 +75,9 @@ class TracerouteMessageHandler
 			time_arrived = val["TIME"]
 
 			if time_arrived > $__ping_timeout
-				puts "TIMEOUT ON #{hop}"
+				Logger.info "TIMEOUT ON #{hop}"
 			else
-				puts "#{hop} #{node} #{time_arrived}"
+				Logger.info "#{hop} #{node} #{time_arrived}"
 			end
 
 		end

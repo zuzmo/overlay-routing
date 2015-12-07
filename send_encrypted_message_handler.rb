@@ -4,6 +4,7 @@ require 'openssl'
 require_relative 'fragmenter'
 require_relative 'message_builder'
 require_relative 'graph'
+require_relative 'logger'
 
 class SendEncryptedMessageHandler
 
@@ -21,7 +22,7 @@ class SendEncryptedMessageHandler
 			begin 
 				forward(JSON.parse(msg))
 			rescue Exception => e
-				puts e
+				Logger.info e
 			end
 
 		end
@@ -64,7 +65,7 @@ class SendEncryptedMessageHandler
 				begin
 					forward(JSON.parse(decrypted_payload))
 				rescue Exception => e
-					puts e
+					Logger.info e
 				end
 			else
 				Logger.info("#{decrypted_payload}") 

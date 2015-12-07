@@ -2,6 +2,7 @@ require 'json'
 require 'time.rb'
 require_relative 'fragmenter'
 require_relative 'message_builder'
+require_relative 'logger'
 
 class PingMessageHandler
 
@@ -11,7 +12,7 @@ class PingMessageHandler
 
 		if dst == $__node_name
 			while num_pings > 0
-				puts "#{seq} #{dst} #{0.0}"
+				Logger.info "#{seq} #{dst} #{0.0}"
 				num_pings -= 1
 				seq += 1
 				sleep(@delay_time)
@@ -43,14 +44,14 @@ class PingMessageHandler
 				time_sent = Time.parse(parsed_msg['HEADER']["TIME_SENT"])
 				time_diff = Time.parse($_time_now) - time_sent
 				if time_diff > $__ping_timeout.to_f
-					puts "PING ERROR: HOST UNREACHABLE"
+					Logger.info "PING ERROR: HOST UNREACHABLE"
 				else
-					puts "#{seq} #{target} #{time_diff}"
+					Logger.info "#{seq} #{target} #{time_diff}"
 				end
 
 			elsif ack == "error"
 				# Dest is unreachable.
-				puts "PING ERROR: HOST UNREACHABLE"
+				Logger.info "PING ERROR: HOST UNREACHABLE"
 				
 			end
 		else	
@@ -75,7 +76,7 @@ class PingMessageHandler
 			begin
 				forward(JSON.parse(packet))
 			rescue Exception => e
-				puts "PING ERROR: HOST UNREACHABLE"
+				Logger.info "PING ERROR: HOST UNREACHABLE"
 			end
 			
 			num_pings -= 1

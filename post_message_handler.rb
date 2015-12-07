@@ -1,4 +1,5 @@
 
+require_relative 'logger'
 
 class PostMessageHandler
 
@@ -11,7 +12,7 @@ class PostMessageHandler
 		refresh_data()
 
 		if $__subscriptions[id] == nil
-			puts "the subscription id doesn't exist"
+			Logger.error "the subscription id doesn't exist"
 			return
 		end
 
@@ -19,7 +20,7 @@ class PostMessageHandler
 
 
 		if arr == nil || arr.size == 0
-			puts "sent to nobody"
+			Logger.error "sent to nobody"
 			return
 		end
 
@@ -85,7 +86,7 @@ class PostMessageHandler
 
 	def self.print_consistency_error(parsed_message)
 		uniq_seq = parsed_message["HEADER"]["UNIQUE_SEQ"]
-		puts "ADVERTISE #{uniq_seq}: CONSISTENCY FAULT #{@@heard_from[0]} ?? #{@@heard_from[@@counter - 1]}"
+		Logger.info "ADVERTISE #{uniq_seq}: CONSISTENCY FAULT #{@@heard_from[0]} ?? #{@@heard_from[@@counter - 1]}"
 	end
 
 	def self.kill_timer
@@ -105,7 +106,7 @@ class PostMessageHandler
 
 		if $__node_name == originator
 			uniq_seq = parsed_message["HEADER"]["UNIQUE_SEQ"]
-			puts "POST FAILURE: #{uniq_seq} NO RESPONSE IN #{$__ping_timeout}" 
+			Logger.info "POST FAILURE: #{uniq_seq} NO RESPONSE IN #{$__ping_timeout}" 
 		end
 
 	end
@@ -124,9 +125,9 @@ class PostMessageHandler
 						print "#{node} "
 					end
 				end
-			puts "FAILED TO RECEIVE MESSAGE"
+			Logger.info "FAILED TO RECEIVE MESSAGE"
 		else
-			puts "POST #{uniq_seq} DELIVERED TO #{arr.length}"
+			Logger.info "POST #{uniq_seq} DELIVERED TO #{arr.length}"
 		end
 
 	end
@@ -134,7 +135,7 @@ class PostMessageHandler
 	def self.print_successful_reply(parsed_message)
 		msg = parsed_message["HEADER"]["MSG"]
 		originator = parsed_message["HEADER"]["ORIGINATOR"]
- 		puts "SNDMSG: #{originator} --> #{msg}"
+ 		Logger.info "SNDMSG: #{originator} --> #{msg}"
 	end
 
 	def self.prepare_to_forward(parsed_message,next_node,arr)

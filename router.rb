@@ -46,7 +46,7 @@ class Router
 				# copy = parsed_msg.clone
 				parsed_msg["HEADER"]["TARGET"] = neighbor
 				# arr.push(copy)
-				# puts copy
+			
 
 
 				dst = parsed_msg['HEADER']['TARGET']

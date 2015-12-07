@@ -1,5 +1,6 @@
 require 'json'
 require_relative 'message_builder'
+require_relative 'logger'
 
 class AdvertiseMessageHandler
 
@@ -78,7 +79,7 @@ class AdvertiseMessageHandler
 
 	def self.print_consistency_error(parsed_message)
 		uniq_seq = parsed_message["HEADER"]["UNIQUE_SEQ"]
-		puts "ADVERTISE #{uniq_seq}: CONSISTENCY FAULT #{@@heard_from[0]} ?? #{@@heard_from[@@counter - 1]}"
+		Logger.info "ADVERTISE #{uniq_seq}: CONSISTENCY FAULT #{@@heard_from[0]} ?? #{@@heard_from[@@counter - 1]}"
 	end
 
 	def self.kill_timer
@@ -98,10 +99,10 @@ class AdvertiseMessageHandler
 
 		if $__node_name == originator
 			uniq_seq = parsed_message["HEADER"]["UNIQUE_SEQ"]
-			puts "ADVERTISE #{uniq_seq} FAILED AFTER #{$__ping_timeout}" 
+			Logger.info "ADVERTISE #{uniq_seq} FAILED AFTER #{$__ping_timeout}" 
 		else
 			next_node = parsed_message["HEADER"]["TARGET"]
-			puts "ADVERTISE FAILURE: NO RESPONSE FROM #{next_node} in #{$__ping_timeout}"	
+			Logger.info "ADVERTISE FAILURE: NO RESPONSE FROM #{next_node} in #{$__ping_timeout}"	
 		end
 
 	end
@@ -121,20 +122,20 @@ class AdvertiseMessageHandler
 				print "#{k} "
 		end
 
-		puts "SUBSCRIBED TO #{parsed_message["HEADER"]["UNIQUE_SEQ"]}"
+		Logger.info "SUBSCRIBED TO #{parsed_message["HEADER"]["UNIQUE_SEQ"]}"
 
 	end
 
 	def self.print_successful_forward(parsed_message)
 		uniq_seq = parsed_message["HEADER"]["UNIQUE_SEQ"]
 		next_node = parsed_message["HEADER"]["TARGET"]
- 		puts "ADVERTISE: #{uniq_seq} #{@@reply_to} --> #{next_node}"
+ 		Logger.info "ADVERTISE: #{uniq_seq} #{@@reply_to} --> #{next_node}"
 	end
 
 	def self.print_successful_reply(parsed_message)
 		uniq_seq = parsed_message["HEADER"]["UNIQUE_SEQ"]
 		prev_node = parsed_message["HEADER"]["SENDER"]
- 		puts "ADVERTISE: #{uniq_seq} #{prev_node} --> #{@@reply_to}"
+ 		Logger.info "ADVERTISE: #{uniq_seq} #{prev_node} --> #{@@reply_to}"
 	end
 
 	def self.prepare_to_forward(parsed_message,next_node,arr)

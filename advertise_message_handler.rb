@@ -51,6 +51,8 @@ class AdvertiseMessageHandler
 			end
 		else
 
+			parsed_message["HEADER"]["NODE_LIST"] = arr
+			
 			if parsed_message["HEADER"]["ACK"] == "false"
 				parsed_message = add_to_list(parsed_message)
 				@@reply_to = parsed_message["HEADER"]["SENDER"]

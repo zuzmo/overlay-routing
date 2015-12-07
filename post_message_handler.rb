@@ -59,6 +59,8 @@ class PostMessageHandler
 			end
 		else
 
+			parsed_message["HEADER"]["NODE_LIST"] = arr
+			
 			if parsed_message["HEADER"]["ACK"] == "false"
 				parsed_message["HEADER"]["RCVD"].push($__node_name)
 				@@reply_to = parsed_message["HEADER"]["SENDER"]

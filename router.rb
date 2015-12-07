@@ -10,7 +10,7 @@ class Router
 
 	def self.forward(parsed_msg)
 		@@semaphore.synchronize {
-
+			
 			dst = parsed_msg['HEADER']['TARGET']
 			src, next_hop = @@fwd_table[dst]
 			raise 'node not in table' if src.nil? or next_hop.nil?

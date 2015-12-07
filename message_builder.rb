@@ -111,4 +111,46 @@ class MessageBuilder
 		clocksync_message.to_json
 	end
 
+	@@advertise_msg_seq = 0
+	def self.create_advertise_message(originator,sender,target,ack,uniq_sq,list)
+		@@advertise_msg_seq +=  1
+		advertise_message = {
+				"HEADER" =>
+						{"TYPE" => "ADVERTISE",
+						 "ORIGINATOR" => "#{originator}",
+						 "SENDER" => "#{sender}",
+						 "TARGET" => "#{target}",
+						 "SEQUENCE" => "#{@@advertise_msg_seq}",
+						 "TIME_SENT" => "#",
+						 "UNIQUE_SEQ" => "#{uniq_sq}",
+						 "INTEREST_LIST" => {},
+						 "NODE_LIST" => list,
+						 "ACK" => "#{ack}",
+						},
+				"PAYLOAD" => "test"
+		}
+		advertise_message.to_json
+	end
+
+	@@post_msg_seq = 0
+	def self.create_post_message(originator,sender,target,ack,uniq_sq,list,msg)
+		@@post_msg_seq +=  1
+		post_message = {
+				"HEADER" =>
+						{"TYPE" => "POST",
+						 "ORIGINATOR" => "#{originator}",
+						 "SENDER" => "#{sender}",
+						 "TARGET" => "#{target}",
+						 "SEQUENCE" => "#{@@post_msg_seq}",
+						 "UNIQUE_SEQ" => "#{uniq_sq}",
+						 "NODE_LIST" => list,
+						 "ACK" => "#{ack}",
+						 "MSG" => msg,
+						 "RCVD" => []
+						},
+				"PAYLOAD" => "test"
+		}
+		post_message.to_json
+	end
+
 end

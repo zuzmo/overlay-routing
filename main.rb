@@ -7,7 +7,8 @@ require_relative 'link_state_manager'
 require_relative 'logger'
 require_relative 'send_message_handler'
 require_relative 'ping_message_handler'
-require_relative 'clocksync_message_handler'
+require_relative 'advertise_message_handler'
+require_relative 'post_message_handler'
 require_relative 'server'
 require_relative 'utility'
 
@@ -22,6 +23,11 @@ end
 
 config_file		= ARGV[0]
 $__node_name 	= ARGV[1]
+
+#for subscription
+
+$__subscriptions = {}
+$__subscribed_to = []
 
 Thread.abort_on_exception = true;
 
@@ -116,9 +122,12 @@ loop do
 	when /^POSTs\s+(.+)\s+(.+)/
 		niq_id, nodes = $1, $2
 		# ALL
-	when /^ADVERTISEs\s+(.+)\s+(.+)/
+	when /^ADVERTISE\s+(\w+)\s(.+)/
+		uniq_id, csv = $1, $2
+		AdvertiseMessageHandler.handle_from_console(uniq_id,csv)
+	when /^POST\s(\w+)\s(.+)/
 		uniq_id, msg = $1, $2
-		# ALL
+		PostMessageHandler.handle_from_console(uniq_id,msg)
 	when /^CLOCKSYNC/
 		ClocksyncMessageHandler.handle_from_console
     else

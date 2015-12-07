@@ -128,9 +128,10 @@ class Utility
 	def self.read_bytes(fname)
 		s = File.open(fname,'rb'){ |f| f.read }
 		# s.encoding
-		arr = s.unpack('H2'*s.size)
+		nbytes = s.size
+		arr = s.unpack('H2'*nbytes)
 		str = arr*''
-		str
+		[str, nbytes]
 	end
 
 	def self.write_bytes(fname, bytes)

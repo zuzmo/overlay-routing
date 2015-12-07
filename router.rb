@@ -1,5 +1,6 @@
 require 'thread'
 require 'set'
+
 require_relative 'graph'
 require_relative 'link_state_manager'
 
@@ -73,6 +74,25 @@ class Router
 	def self.update(fwd_table)
 		@@semaphore.synchronize {
 			@@fwd_table = fwd_table
+		}
+	end
+
+	def self.forward_ftp(parsed_msg)
+		@@semaphore.synchronize {
+
+			dst = parsed_msg['HEADER']['TARGET']
+			src, next_hop = @@fwd_table[dst]
+			raise 'node not in table' if src.nil? or next_hop.nil?
+			next_hop_ip = LinkStateManager.get_ip(src, next_hop)
+			next_hop_port = $__node_ports[next_hop]
+			msg = parsed_msg.to_json
+			begin
+				Client.send_ftp(msg, next_hop_ip, next_hop_port)
+			rescue Exception => e 
+				# pass exception to caller
+				raise Exception, e
+				# Logger.error("#{e} #{next_hop_ip} #{next_hop_port}")
+			end
 		}
 	end
 end

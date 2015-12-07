@@ -3,155 +3,89 @@ require 'time.rb'
 require_relative 'fragmenter'
 require_relative 'message_builder'
 
-# TODO:
-# 1. PING to itself?
-
 class PingMessageHandler
 
- 
-  def self.handle_from_console(dst, num_pings, delay)
+	def self.handle_from_console(dst, num_pings, delay)
+		seq = 0
+		@delay_time = delay
 
-    # Build a packet and forward.
-    packet = MessageBuilder.create_ping_message($__node_name, dst, num_pings, $_time_now)
-
-    # Set the values of seq and ack back to 0.
-    packet = (JSON.parse(packet))
-    packet['HEADER']['SEQUENCE'] = 0
-    packet['HEADER']['ACK'] = 0
-	
-	seq = packet['HEADER']['SEQUENCE']
-
-	@delay_time = delay
-
-
-	if dst == $__node_name
-		
-  		while num_pings > 0
-  			# 
-  			# target = packet['HEADER']['TARGET']
-  			# packet['HEADER']['TIME_SENT'] = $_time_now
-  			# print_result(packet, seq, target)
-
-
-  			puts "#{seq} #{dst} #{0.0}"
-  			seq += 1
-  			num_pings -= 1
-  			sleep(@delay_time)
-  		end
-  	else
-		begin
-    		forward(JSON.parse(packet.to_json))
-		rescue Exception => e
-			puts e
-			puts "PING ERROR: HOST UNREACHABLE"
-		end
-  	end  
-
-  end
-
-
-  #====================================
-  # Handle the packet that is received.
-  #====================================
-  def self.handle_received(parsed_msg)
-
-    if parsed_msg['HEADER']['TARGET'] == $__node_name
-
-      seq = parsed_msg['HEADER']['SEQUENCE'].to_i
-      ack = parsed_msg['HEADER']['ACK'].to_i
-      num_pings = parsed_msg['HEADER']['NUM_PINGS'].to_i
-      sender = parsed_msg['HEADER']['TARGET']
-      target = parsed_msg['HEADER']['SENDER']
-
-
-      #===========================================================
-      # If seq = 0, ack = 0, then dest received a packet from src.
-      # If seq = 0, ack = 1, then src received a packet from dest.
-      # If seq = 1, ack = 1, then dest received a packet from src.
-      # If seq = 1, ack = 2, then src received a packet from dest.
-      #
-      # Basically, when seq == ack, that means src has sent a packet to dest.
-      # Otherwise, dest has sent a packet to src.
-      #===========================================================
-
-      if seq == ack
-
-        # Creating a new packet, which will be sent by dest to src
-        # with sender and target swapped and incrementing ack.
-
-        parsed_msg['HEADER']['TARGET'] = target
-        parsed_msg['HEADER']['SENDER'] = sender
-        parsed_msg['HEADER']['ACK'] = ack + 1
-
-        begin
-        	forward(JSON.parse(parsed_msg.to_json))
-        rescue Exception => e
-        	puts "PING ERROR: HOST UNREACHABLE"
-        end
-
-      else
-
-        # Src needs to transmit [num_pings] number of packets to dest.
-        # Src updates the value of ['NUM_PINGS'] number of packets more on way.
-
-        if num_pings == 0
-          	# All packets have been sent [num_pings] times.
-
-        else
-        	print_result(parsed_msg, seq, target)
-
-
-          	# Sleep for [@delay_time] before sending another packet.
-          	sleep(@delay_time)
-
-         	# Creating a new packet, which will be sent by src to dest
-          	# with sender and target swapped and incrementing seq.
-
-          	parsed_msg['HEADER']['TARGET'] = target
-          	parsed_msg['HEADER']['SENDER'] = sender
-          	parsed_msg['HEADER']['SEQUENCE'] = seq + 1
-          	parsed_msg['HEADER']['NUM_PINGS'] = num_pings - 1
-          	parsed_msg['HEADER']['TIME_SENT'] = $_time_now
-
-          	begin
-				forward(JSON.parse(parsed_msg.to_json))
-			rescue Exeption => e
-				puts "PING ERROR: HOST UNREACHABLE"
+		if dst == $__node_name
+			while num_pings > 0
+				puts "#{seq} #{dst} #{0.0}"
+				num_pings -= 1
+				seq += 1
+				sleep(@delay_time)
 			end
 
-	
-        end
+		else
+			create_new_packet(seq, dst, num_pings, delay)	
+		end
+	end
 
-      end
+	def self.handle_received(parsed_msg)
+		seq = parsed_msg['HEADER']['SEQUENCE']
+		ack = parsed_msg['HEADER']['ACK']
+		sender = parsed_msg['HEADER']['TARGET']
+		target =  parsed_msg['HEADER']['SENDER']
+
+		if parsed_msg['HEADER']['TARGET'] == $__node_name
+			if ack == "false"
+				# Dest received a packet.
+				parsed_msg['HEADER']['TARGET'] = target
+				parsed_msg['HEADER']['SENDER'] = sender
+				parsed_msg['HEADER']['ACK'] = "true"
+				begin
+					forward(parsed_msg)
+				rescue Exception => e
+				end
+			elsif ack == "true"
+				# Src received an acknowledgement.
+				time_sent = Time.parse(parsed_msg['HEADER']["TIME_SENT"])
+				time_diff = Time.parse($_time_now) - time_sent
+				if time_diff > $__ping_timeout.to_f
+					puts "PING ERROR: HOST UNREACHABLE"
+				else
+					puts "#{seq} #{target} #{time_diff}"
+				end
+
+			elsif ack == "error"
+				# Dest is unreachable.
+				puts "PING ERROR: HOST UNREACHABLE"
+				
+			end
+		else	
+
+			begin
+				forward(parsed_msg)
+			rescue Exception => e
+				if e.to_s == "unreachable node"
+					parsed_msg['HEADER']['TARGET'] = target
+					parsed_msg['HEADER']['SENDER'] = $__node_name
+					parsed_msg['HEADER']['ACK'] = "error"
+					forward(parsed_msg)
+				end
+			end
+		end
+	end
 
 
-    else
-    	# Keep forwarding until dest is reached.
-    	begin
-    		forward(parsed_msg)
-    	rescue Exception => e
-    		puts "PING ERROR: HOST UNREACHABLE"
-    	end
+	def self.create_new_packet(seq, dst, num_pings, delay)
+		while num_pings > 0
+			packet = MessageBuilder.create_ping_message($__node_name, dst, seq, "false", $_time_now)
+			begin
+				forward(JSON.parse(packet))
+			rescue Exception => e
+				puts "PING ERROR: HOST UNREACHABLE"
+			end
+			
+			num_pings -= 1
+			sleep(delay)
+			seq += 1
+		end
+	end
 
-    end
-  end
-
-  def self.print_result(parsed_msg, seq, target)
-
-    # Calculate the RTT between the packet sent from src to dest and dest to src.
-    time_sent = Time.parse(parsed_msg['HEADER']['TIME_SENT'])
-    time_diff = Time.parse($_time_now) - time_sent
-
-    if time_diff > $__ping_timeout.to_f
-      puts "PING ERROR: HOST UNREACHABLE"
-    else
-      puts "#{seq} #{target} #{time_diff}"
-    end
-
-  end
-
-  def self.forward(parsed_msg)
-    Router.forward(parsed_msg)
-  end
+	def self.forward(parsed_msg)
+		Router.forward(parsed_msg)
+	end
 
 end

@@ -1,10 +1,14 @@
 require 'socket'
+require 'readline'
 
-require_relative 'debug'
 require_relative 'clock'
+require_relative 'ftp_handler'
+require_relative 'hooks'
 require_relative 'link_state_manager'
 require_relative 'logger'
 require_relative 'send_message_handler'
+require_relative 'ping_message_handler'
+require_relative 'clocksync_message_handler'
 require_relative 'server'
 require_relative 'utility'
 
@@ -12,15 +16,14 @@ require_relative 'utility'
 # 0. Read args from stdin
 #==========================================================
 if ARGV.length != 2
-  puts "Invalid number of arguments."
-  puts "Usage: ruby main.rb config <node_name>"
+  Logger.error("Invalid number of arguments.")
+  Logger.error("Usage: ruby main.rb config <node_name>")
   exit(1)
 end
 
 config_file		= ARGV[0]
 $__node_name 	= ARGV[1]
 
-# Logger.init($node_name)
 Thread.abort_on_exception = true;
 
 #==========================================================
@@ -60,57 +63,71 @@ sleep(2) # wait to initialize shared resources
 Thread.new {LinkStateManager.handle_flooding}
 
 #==========================================================
-# 4. Read commands from stdin
+# 4. Start thread that updates clock
 #==========================================================
 $_time_now
-def start_heartbeat
+$_clock
+Thread.new{
+	$_clock = Clock.new
+	loop do
+		$_clock.tick(1)
+		$_time_now = $_clock.get_time
+		sleep 1
+	end
+}
 
-		# dbg("entering start_heartbeat")
-
-		@heartbeat_pid = Thread.new{
-			@clock = Clock.new
-			loop do
-				sleep 1
-				@clock.tick(1)
-				$_time_now = @clock.get_time
-		    	# dbg @clock.get_time
-			end
-		}
-
-end
-start_heartbeat
-loop do 
-
-    user_input = STDIN.gets.chomp
+#==========================================================
+# 5. Read commands from stdin
+#==========================================================
+begin
+	while buf = Readline.readline('', true)
     
-    case user_input
-    when /^DUMPTABLE\s[\w\d\.]*/
-      file_name = user_input.split(" ")[1]
-      #todo
-    when /^FORCEUPDATE/
-    	LinkStateManager.broadcast_link_state
-    when /^CHECKSTABLE/
-    	LinkStateManager.check_stable?
-    when /^SHUTDOWN/
-    	exit(1)
-    when /^debug/
-      Debug.dump(server)
-    when /^SNDMSG\s+(.+)\s+"(.+)"/
-      dst, msg = $1, $2
-      SendMessageHandler.handle_from_console(dst, msg)
-  	when /^TRACEROUTE\s[\w\d\.]*/
-				dest = user_input.split(" ")[1]
-				m = MessageBuilder.create_traceroute_message(
-				$__node_name,dest,443,$_time_now,false)
-				# graph = Graph.new($_linked_cost_map)
-				# table = graph.forwarding_table($_node_name)
-				# next_hop = table[dest][1]
-				# ip = $_hostname_ip_map["#{$_node_name}"][next_hop]
-				# Client.send(m, ip, 7000)
-				Router.forward(JSON.parse(m))
-    else
-      puts "try again"
-    end
+	    case buf
+	    when /^DUMPTABLE\s+(.+)/
+	    	# Gonzalo
+	    	fname = $1
+	    	Hooks.dump_table(fname)
+	    when /^FORCEUPDATE/
+	    	# Gonzalo
+	    	Hooks.force_update
+	    when /^CHECKSTABLE/
+	    	# Gonzalo
+	    	Hooks.check_stable
+	    when /^SHUTDOWN/
+	    	# George
+	    	STDOUT.flush
+	    	exit(1)
+	    when /^SNDMSG\s+(.+)\s+"(.+)"/
+	    	# Gonzalo
+		    dst, msg = $1, $2
+		    SendMessageHandler.handle_from_console(dst, msg)
+	  	when /^TRACEROUTE\s+(.+)/
+	  		# George
+			dst = $1
+			TracerouteMessageHandler.handle_from_console(dst)
+		when /^PING\s+(.+)\s+(\d+)\s+(\d+)/
+			# Ivy
+	    dst, num_pings, delay = $1, $2, $3
+			PingMessageHandler.handle_from_console(dst, num_pings.to_i, delay.to_i)
+		when /^FTP\s+(.+)\s+(.+)\s+(.+)/
+			# Gonzalo
+			dst, file, file_path = $1, $2, $3
+			FtpHandler.handle_from_console(dst, file, file_path)
+		when /^POSTs\s+(.+)\s+(.+)/
+			niq_id, nodes = $1, $2
+			# ALL
+		when /^ADVERTISEs\s+(.+)\s+(.+)/
+			uniq_id, msg = $1, $2
+			# ALL
+		when /^CLOCKSYNC/
+			ClocksyncMessageHandler.handle_from_console
+	    else
+	      Logger.error("try again")
+	    end
+
+	end
+rescue Interrupt => e
+	exit
 end
 
 

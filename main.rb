@@ -16,8 +16,8 @@ require_relative 'utility'
 # 0. Read args from stdin
 #==========================================================
 if ARGV.length != 2
-  puts "Invalid number of arguments."
-  puts "Usage: ruby main.rb config <node_name>"
+  Logger.error("Invalid number of arguments.")
+  Logger.error("Usage: ruby main.rb config <node_name>")
   exit(1)
 end
 
@@ -131,7 +131,7 @@ loop do
 	when /^CLOCKSYNC/
 		ClocksyncMessageHandler.handle_from_console
     else
-      puts "try again"
+      Logger.error("try again")
     end
 end
 

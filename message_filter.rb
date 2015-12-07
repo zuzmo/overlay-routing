@@ -26,10 +26,19 @@ class MessageFilter
 		elsif 	type 	== 'PING'
 			PingMessageHandler.handle_received(parsed_msg)
 		elsif 	type 	== 'FTP'
-			if parsed_msg['HEADER']['ACK'] = 1
-				FtpHandler.handle_ack(parsed_msg)
+			if parsed_msg['HEADER']['TARGET'] == $__node_name
+				if parsed_msg['HEADER']['ACK'] == 'true'
+					# file sent successfully
+					FtpHandler.handle_received_ack(parsed_msg)
+				elsif parsed_msg['HEADER']['ACK'] == 'error'
+					FtpHandler.handle_transmission_error(parsed_msg)
+				else
+					# save to disk and send ack
+					FtpHandler.handle_im_target(parsed_msg)
+				end
 			else
-				FtpHandler.handle_received(parsed_msg)
+				# forward to next destination
+				FtpHandler.forward(parsed_msg)
 			end
 		elsif 	type 	== 'TRACEROUTE'
 			TracerouteMessageHandler.handle(parsed_msg)

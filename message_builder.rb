@@ -154,10 +154,10 @@ class MessageBuilder
 
 	def self.create_send_encrypted_message(sender, target, cipher_token, payload)
 		{
-			'HEADER' => { 	'TYPE' 			=> 'SNDMSG',
+			'HEADER' => { 	'TYPE' 			=> 'SECMSG',
 							'SENDER' 		=> sender,
 							'TARGET' 		=> target,
-							'SEQUENCE' 		=> 0,
+							'SEQ' 		=> 0,
 							'CIPHER_TOKEN' 	=> cipher_token,
 							'ACK' 		=> 0
 						},

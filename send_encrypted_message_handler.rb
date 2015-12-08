@@ -3,8 +3,8 @@ require 'openssl'
 
 require_relative 'fragmenter'
 require_relative 'message_builder'
-require_relative 'logger'
 require_relative 'link_state_manager'
+require_relative 'graph'
 
 class SendEncryptedMessageHandler
 
@@ -17,7 +17,6 @@ class SendEncryptedMessageHandler
 			# This is where Onion Routing begins.
 			#======================================================
 			path_to_dest = LinkStateManager.get_src_to_dst_path(dst)
-			puts path_to_dest
 			msg = create_packet_layers(payload, path_to_dest)
 
 			begin 
@@ -60,7 +59,6 @@ class SendEncryptedMessageHandler
 			decipher.iv = iv
 			decrypted_payload = decipher.update(decoded_payload) + decipher.final
 
-			puts decrypted_payload
 			# Forward if it's not a packet, otherwise print the decrypted result.
 			if ((decrypted_payload.include? "HEADER") && (decrypted_payload.include? "PAYLOAD") && 
 				(decrypted_payload.include? "TYPE"))
@@ -70,7 +68,7 @@ class SendEncryptedMessageHandler
 					puts e
 				end
 			else
-				#Logger.info("#{decrypted_payload}") 
+				Logger.info("#{decrypted_payload}") 
 			end
 		end	
 	end

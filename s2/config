@@ -1,3 +1,5 @@
-updateInterval=15
-weightFile=./weights.csv
-nodesFile=./nodes
+updateInterval=3
+weightFile=/home/core/CMSC417/projects/p3/overlay-routing/weights.csv
+nodes=/home/core/CMSC417/projects/p3/overlay-routing/nodes.txt
+maxPacketSize=2000
+pingTimeout=2

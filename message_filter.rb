@@ -3,6 +3,7 @@ require 'json'
 require_relative 'hello_message_handler'
 require_relative 'flood_message_handler'
 require_relative 'send_message_handler'
+require_relative 'send_encrypted_message_handler'
 require_relative 'ping_message_handler'
 require_relative 'traceroute_message_handler'
 require_relative 'advertise_message_handler'
@@ -56,6 +57,8 @@ class MessageFilter
 			else
 				PostMessageHandler.handle(parsed_msg)
 			end
+		elsif 	type 	== 'SECMSG'
+			SendEncryptedMessageHandler.handle_received(parsed_msg)
 		end
 
 	end

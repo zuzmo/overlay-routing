@@ -213,4 +213,9 @@ class LinkStateManager
 
 		data
 	end
+
+	def self.get_src_to_dst_path(dst)
+		path, _ = @@graph.src_to_dest($__node_name, dst)
+		path
+	end
 end

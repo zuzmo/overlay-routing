@@ -139,7 +139,7 @@ class Utility
 		File.write(fname, bytes)
 	end
 	
-		def self.generate_keys()
+	def self.generate_keys()
 		#=========================================================
 		# RSA Key - Network Security
 		# 2048 is the key size and a recommended size.
@@ -148,13 +148,13 @@ class Utility
 		#=========================================================
 		rsa_key = OpenSSL::PKey::RSA.new 2048
 
-		private_keys_file = "#{$__node_name}.pem"
+		private_keys_file = "/home/core/private-#{$__node_name}.pem"
 		open private_keys_file, 'w' do |io|
 			io.write rsa_key.to_pem
 			io.flush
 		end
 
-		public_keys_file = "#{$__node_name}.pem"
+		public_keys_file = "/home/core/public-#{$__node_name}.pem"
 		open public_keys_file, 'w' do |io|
 			io.write rsa_key.public_key.to_pem
 			io.flush

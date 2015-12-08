@@ -3,8 +3,8 @@ require 'openssl'
 
 require_relative 'fragmenter'
 require_relative 'message_builder'
-require_relative 'graph'
 require_relative 'logger'
+require_relative 'link_state_manager'
 
 class SendEncryptedMessageHandler
 
@@ -16,7 +16,8 @@ class SendEncryptedMessageHandler
 			# Now that we know the path, we need to create layers.
 			# This is where Onion Routing begins.
 			#======================================================
-			path_to_dest = ["n1", "n3", "n4"]
+			path_to_dest = LinkStateManager.get_src_to_dst_path(dst)
+			puts path_to_dest
 			msg = create_packet_layers(payload, path_to_dest)
 
 			begin 
@@ -42,7 +43,7 @@ class SendEncryptedMessageHandler
 			#==================================================
 			# Read the private_key to decrypt the key.
 			#==================================================
-			private_key_file = "/home/core/Desktop/project-3/overlay-routing/private_keys/#{node}.pem"
+			private_key_file = "/home/core/private-#{node}.pem"
 			private_key = OpenSSL::PKey::RSA.new File.read private_key_file
 			cipher_stuff = private_key.private_decrypt(decoded_cipher_token)
 
@@ -59,6 +60,7 @@ class SendEncryptedMessageHandler
 			decipher.iv = iv
 			decrypted_payload = decipher.update(decoded_payload) + decipher.final
 
+			puts decrypted_payload
 			# Forward if it's not a packet, otherwise print the decrypted result.
 			if ((decrypted_payload.include? "HEADER") && (decrypted_payload.include? "PAYLOAD") && 
 				(decrypted_payload.include? "TYPE"))
@@ -68,7 +70,7 @@ class SendEncryptedMessageHandler
 					Logger.info e
 				end
 			else
-				Logger.info("#{decrypted_payload}") 
+				#Logger.info("#{decrypted_payload}") 
 			end
 		end	
 	end
@@ -94,7 +96,7 @@ class SendEncryptedMessageHandler
 		encoded_payload = encode(encrypted_payload)
 
 		# Reading the public key of a node.
-		public_key_file = "/home/core/Desktop/project-3/overlay-routing/public_keys/#{next_hop}.pem"
+		public_key_file = "/home/core/public-#{next_hop}.pem"
 		public_key = OpenSSL::PKey::RSA.new File.read public_key_file
 		
 		# Preparing the encrypted cipher token (key, iv) with public key and then encode it.

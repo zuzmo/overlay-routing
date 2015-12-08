@@ -48,8 +48,12 @@ class FtpHandler
 		dep_time = parsed_msg['HEADER']['DEPTIME']
 		arr_time = parsed_msg['HEADER']['ARRTIME']
 		delta = Time.parse(arr_time) - Time.parse(dep_time)
-		rate = nbytes / delta
-		Logger.info("#{fname} --> #{dst} in #{delta} at #{rate}")
+		if delta == 0
+			rate = nbytes
+		else
+			rate = nbytes / delta
+		end
+		Logger.info("#{fname} --> #{dst} in #{delta.to_i}s at #{rate.to_i}Bps")
 	end
 
 	def self.handle_transmission_error(parsed_msg)

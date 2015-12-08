@@ -7,6 +7,7 @@ require_relative 'hooks'
 require_relative 'link_state_manager'
 require_relative 'logger'
 require_relative 'send_message_handler'
+require_relative 'send_encrypted_message_handler'
 require_relative 'ping_message_handler'
 require_relative 'advertise_message_handler'
 require_relative 'post_message_handler'
@@ -24,6 +25,8 @@ end
 
 config_file		= ARGV[0]
 $__node_name 	= ARGV[1]
+
+Utility.generate_keys
 
 #for subscription
 
@@ -130,6 +133,9 @@ begin
 			PostMessageHandler.handle_from_console(uniq_id,msg)
 		when /^CLOCKSYNC/
 			ClocksyncMessageHandler.handle_from_console
+		when /^SECMSG\s+(.+)\s+"(.+)"/		# send encrypted message
+			dst, msg = $1, $2
+	    	SendEncryptedMessageHandler.handle_from_console(dst, msg)
 	    else
 	      Logger.error("try again")
 	    end

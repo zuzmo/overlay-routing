@@ -152,4 +152,17 @@ class MessageBuilder
 		post_message.to_json
 	end
 
+	def self.create_send_encrypted_message(sender, target, cipher_token, payload)
+		{
+			'HEADER' => { 	'TYPE' 			=> 'SNDMSG',
+							'SENDER' 		=> sender,
+							'TARGET' 		=> target,
+							'SEQUENCE' 		=> 0,
+							'CIPHER_TOKEN' 	=> cipher_token,
+							'ACK' 		=> 0
+						},
+			'PAYLOAD' => payload
+		}.to_json
+	end
+
 end

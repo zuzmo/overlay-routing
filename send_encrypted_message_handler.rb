@@ -23,7 +23,7 @@ class SendEncryptedMessageHandler
 			begin 
 				forward(JSON.parse(msg))
 			rescue Exception => e
-				Logger.info e
+				puts e
 			end
 
 		end
@@ -67,7 +67,7 @@ class SendEncryptedMessageHandler
 				begin
 					forward(JSON.parse(decrypted_payload))
 				rescue Exception => e
-					Logger.info e
+					puts e
 				end
 			else
 				#Logger.info("#{decrypted_payload}") 

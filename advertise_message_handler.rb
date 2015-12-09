@@ -31,6 +31,7 @@ class AdvertiseMessageHandler
 
 	def self.handle(parsed_message)
 
+	
 		refresh_data()
 
 		if parsed_message["HEADER"]["ACK"] == "true"
@@ -50,27 +51,27 @@ class AdvertiseMessageHandler
 				@@counter += 1
 			end
 		else
-
-			parsed_message["HEADER"]["NODE_LIST"] = arr
 			
 			if parsed_message["HEADER"]["ACK"] == "false"
 				parsed_message = add_to_list(parsed_message)
 				@@reply_to = parsed_message["HEADER"]["SENDER"]
 			end
 
-
 			if arr.length == 0
 				print_successful_reply(parsed_message)
 				reply(parsed_message)
 			else
+			
 				next_node,arr = dest_with_least_cost(arr)
 
+				
 				if reply?(next_node,parsed_message["HEADER"]["SENDER"])
 					print_successful_reply(parsed_message)
 					reply(parsed_message)
 				else
+					sender = parsed_message["HEADER"]["SENDER"]
 					parsed_message = prepare_to_forward(parsed_message,next_node,arr)
-					print_successful_forward(parsed_message)
+					print_successful_forward(parsed_message,sender)
 					forward(parsed_message)
 				end
 			end
@@ -116,22 +117,31 @@ class AdvertiseMessageHandler
 	
 		interested_list = arr.select{|k,v| v == "true"}
 
-		print "#{interested_list.size} NODES "
+		Logger.print "#{interested_list.size} NODES "
 
 
 		interested_list.each do |k,v|
 				$__subscriptions[uniq_seq].push(k)
-				print "#{k} "
+				Logger.print "#{k} "
 		end
 
 		Logger.info "SUBSCRIBED TO #{parsed_message["HEADER"]["UNIQUE_SEQ"]}"
 
 	end
 
-	def self.print_successful_forward(parsed_message)
+	def self.print_successful_forward(parsed_message,sender)
 		uniq_seq = parsed_message["HEADER"]["UNIQUE_SEQ"]
 		next_node = parsed_message["HEADER"]["TARGET"]
- 		Logger.info "ADVERTISE: #{uniq_seq} #{@@reply_to} --> #{next_node}"
+		originator = parsed_message["HEADER"]["ORIGINATOR"]
+
+		if originator == $__node_name
+			reply_to = sender
+		else
+			reply_to = @@reply_to
+		end
+
+
+ 		Logger.info "ADVERTISE: #{uniq_seq} #{reply_to} --> #{next_node}"
 	end
 
 	def self.print_successful_reply(parsed_message)
@@ -168,8 +178,10 @@ class AdvertiseMessageHandler
  	end
 
 
-	def self.dest_with_least_cost(arr)
+	def self.dest_with_least_cost(marr)
  		
+ 		arr = marr.clone
+
  		lowest_cost = 999999
  		next_node = ""
  		hash = @paths
@@ -221,7 +233,7 @@ class AdvertiseMessageHandler
 	def self.reply(parsed_message)
 		parsed_message["HEADER"]["TARGET"] = @@reply_to
 		parsed_message["HEADER"]["SENDER"] = $__node_name
-		ack = parsed_message["HEADER"]["ACK"] = "true"
+		parsed_message["HEADER"]["ACK"] = "true"
 		forward(parsed_message)
 	end
 

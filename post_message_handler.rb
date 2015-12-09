@@ -58,8 +58,6 @@ class PostMessageHandler
 				@@counter += 1
 			end
 		else
-
-			parsed_message["HEADER"]["NODE_LIST"] = arr
 			
 			if parsed_message["HEADER"]["ACK"] == "false"
 				parsed_message["HEADER"]["RCVD"].push($__node_name)
@@ -120,11 +118,11 @@ class PostMessageHandler
 		uniq_seq = parsed_message["HEADER"]["UNIQUE_SEQ"]
 		
 		if arr.size < $__subscriptions[uniq_seq].size
-			print "POST FAILURE: #{uniq_seq} NODES "
+			Logger.print "POST FAILURE: #{uniq_seq} NODES "
 
 				$__subscriptions[uniq_seq].each do |node|
 					if arr.include?(node) == false
-						print "#{node} "
+						Logger.print "#{node} "
 					end
 				end
 			Logger.info "FAILED TO RECEIVE MESSAGE"
@@ -168,8 +166,9 @@ class PostMessageHandler
  	end
 
 
-	def self.dest_with_least_cost(arr)
+	def self.dest_with_least_cost(marr)
  		
+ 		arr = marr.clone
  		lowest_cost = 999999
  		next_node = ""
  		hash = @paths

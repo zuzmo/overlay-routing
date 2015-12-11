@@ -55,7 +55,7 @@ class TracerouteMessageHandler
 		time_sent = Time.parse(header["TIME_SENT"])	
 		time_diff = Time.parse($_time_now) - time_sent
 		if time_diff < 0
-			time_diff = 0;
+			time_diff = "0.0";
 		end
 		header["TRACEROUTE"]["#{$__node_name}"] = 
 			{"TIME" => "#{time_diff}", "HOP" => "#{hop}"}

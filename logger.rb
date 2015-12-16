@@ -4,6 +4,10 @@ class Logger
 		STDERR.puts(entry)
 	end
 
+	def self.print(entry)
+		STDERR.print(entry)
+	end
+
 	def self.warn(entry)
 		STDERR.puts(entry)
 	end

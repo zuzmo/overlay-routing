@@ -1,0 +1,5 @@
+updateInterval=5
+weightFile=./weights.csv
+nodes=./nodes.txt
+maxPacketSize=5000
+pingTimeout=2

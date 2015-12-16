@@ -69,8 +69,8 @@ class FtpHandler
 			begin
 				Router.forward_ftp(parsed_msg)
 			rescue Exception => e
-				if e == 'not in table'
-				
+				if e.to_s == 'node not in table'
+					Logger.error("#{e}")
 				else
 					dst = parsed_msg['HEADER']['SENDER']
 					target = parsed_msg['HEADER']['TARGET']

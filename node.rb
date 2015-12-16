@@ -32,7 +32,7 @@ Utility.generate_keys
 $__subscriptions = {}
 $__subscribed_to = []
 
-Thread.abort_on_exception = true;
+# Thread.abort_on_exception = true;
 
 #==========================================================
 # 1. Read config files (config, weights.csv, and nodes.txt)
@@ -121,7 +121,11 @@ loop do
 	when /^FTP\s+(.+)\s+(.+)\s+(.+)/
 		# Gonzalo
 		dst, file, file_path = $1, $2, $3
-		FtpHandler.handle_from_console(dst, file, file_path)
+		begin
+			FtpHandler.handle_from_console(dst, file, file_path)
+		rescue Exception => e 
+			Logger.error("Invalid filename")
+		end
 	when /^POSTs\s+(.+)\s+(.+)/
 		niq_id, nodes = $1, $2
 		# ALL

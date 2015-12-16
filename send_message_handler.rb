@@ -24,7 +24,11 @@ class SendMessageHandler
 	end
 
 	def self.forward(parsed_msg)
-		Router.forward(parsed_msg)
+		begin
+			Router.forward(parsed_msg)
+		rescue Exception => e 
+			Logger.error("#{e}")
+		end
 	end
 
 end
